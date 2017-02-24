@@ -59,12 +59,14 @@ class Sampler {
     void Request1DArray(int n);
     void Request2DArray(int n);
     virtual int RoundCount(int n) const { return n; }
-    const Float *Get1DArray(int n);
-    const Point2f *Get2DArray(int n);
+    const Float*   Get1DArray(int n);
+    const Point2f* Get2DArray(int n);
     virtual bool StartNextSample();
     virtual std::unique_ptr<Sampler> Clone(int seed) = 0;
     virtual bool SetSampleNumber(int64_t sampleNum);
-    std::string StateString() const {
+
+    std::string StateString() const
+	{
       return StringPrintf("(%d,%d), sample %" PRId64, currentPixel.x,
                           currentPixel.y, currentPixelSampleIndex);
     }
@@ -73,8 +75,9 @@ class Sampler {
     // Sampler Public Data
     const int64_t samplesPerPixel;
 
-  protected:
+  protected: 
     // Sampler Protected Data
+	// Can be accessed by derived class
     Point2i currentPixel;
     int64_t currentPixelSampleIndex;
     std::vector<int> samples1DArraySizes, samples2DArraySizes;
@@ -86,7 +89,8 @@ class Sampler {
     size_t array1DOffset, array2DOffset;
 };
 
-class PixelSampler : public Sampler {
+class PixelSampler : public Sampler
+{
   public:
     // PixelSampler Public Methods
     PixelSampler(int64_t samplesPerPixel, int nSampledDimensions);
@@ -103,7 +107,8 @@ class PixelSampler : public Sampler {
     RNG rng;
 };
 
-class GlobalSampler : public Sampler {
+class GlobalSampler : public Sampler
+{
   public:
     // GlobalSampler Public Methods
     bool StartNextSample();

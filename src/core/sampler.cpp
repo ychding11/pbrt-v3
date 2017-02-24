@@ -43,7 +43,9 @@ namespace pbrt {
 Sampler::~Sampler() {}
 
 Sampler::Sampler(int64_t samplesPerPixel) : samplesPerPixel(samplesPerPixel) {}
-CameraSample Sampler::GetCameraSample(const Point2i &pRaster) {
+
+CameraSample Sampler::GetCameraSample(const Point2i &pRaster)
+{
     CameraSample cs;
     cs.pFilm = (Point2f)pRaster + Get2D();
     cs.time = Get1D();
@@ -71,26 +73,30 @@ bool Sampler::SetSampleNumber(int64_t sampleNum) {
     return currentPixelSampleIndex < samplesPerPixel;
 }
 
-void Sampler::Request1DArray(int n) {
+void Sampler::Request1DArray(int n)
+{
     CHECK_EQ(RoundCount(n), n);
     samples1DArraySizes.push_back(n);
     sampleArray1D.push_back(std::vector<Float>(n * samplesPerPixel));
 }
 
-void Sampler::Request2DArray(int n) {
+void Sampler::Request2DArray(int n)
+{
     CHECK_EQ(RoundCount(n), n);
     samples2DArraySizes.push_back(n);
     sampleArray2D.push_back(std::vector<Point2f>(n * samplesPerPixel));
 }
 
-const Float *Sampler::Get1DArray(int n) {
+const Float *Sampler::Get1DArray(int n)
+{
     if (array1DOffset == sampleArray1D.size()) return nullptr;
     CHECK_EQ(samples1DArraySizes[array1DOffset], n);
     CHECK_LT(currentPixelSampleIndex, samplesPerPixel);
     return &sampleArray1D[array1DOffset++][currentPixelSampleIndex * n];
 }
 
-const Point2f *Sampler::Get2DArray(int n) {
+const Point2f *Sampler::Get2DArray(int n)
+{
     if (array2DOffset == sampleArray2D.size()) return nullptr;
     CHECK_EQ(samples2DArraySizes[array2DOffset], n);
     CHECK_LT(currentPixelSampleIndex, samplesPerPixel);

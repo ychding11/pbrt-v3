@@ -58,6 +58,7 @@ class BVHAccel : public Aggregate {
     enum class SplitMethod { SAH, HLBVH, Middle, EqualCounts };
 
     // BVHAccel Public Methods
+	// Constructor
     BVHAccel(const std::vector<std::shared_ptr<Primitive>> &p,
              int maxPrimsInNode = 1,
              SplitMethod splitMethod = SplitMethod::SAH);
@@ -72,19 +73,23 @@ class BVHAccel : public Aggregate {
         MemoryArena &arena, std::vector<BVHPrimitiveInfo> &primitiveInfo,
         int start, int end, int *totalNodes,
         std::vector<std::shared_ptr<Primitive>> &orderedPrims);
+
     BVHBuildNode *HLBVHBuild(
         MemoryArena &arena, const std::vector<BVHPrimitiveInfo> &primitiveInfo,
         int *totalNodes,
         std::vector<std::shared_ptr<Primitive>> &orderedPrims) const;
+
     BVHBuildNode *emitLBVH(
         BVHBuildNode *&buildNodes,
         const std::vector<BVHPrimitiveInfo> &primitiveInfo,
         MortonPrimitive *mortonPrims, int nPrimitives, int *totalNodes,
         std::vector<std::shared_ptr<Primitive>> &orderedPrims,
         std::atomic<int> *orderedPrimsOffset, int bitIndex) const;
+
     BVHBuildNode *buildUpperSAH(MemoryArena &arena,
                                 std::vector<BVHBuildNode *> &treeletRoots,
                                 int start, int end, int *totalNodes) const;
+
     int flattenBVHTree(BVHBuildNode *node, int *offset);
 
     // BVHAccel Private Data
@@ -94,6 +99,7 @@ class BVHAccel : public Aggregate {
     LinearBVHNode *nodes = nullptr;
 };
 
+// global function.
 std::shared_ptr<BVHAccel> CreateBVHAccelerator(
     const std::vector<std::shared_ptr<Primitive>> &prims, const ParamSet &ps);
 
