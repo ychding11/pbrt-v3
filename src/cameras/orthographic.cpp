@@ -41,6 +41,7 @@
 namespace pbrt {
 
 // OrthographicCamera Definitions
+// Create ray based on sample.
 Float OrthographicCamera::GenerateRay(const CameraSample &sample,
                                       Ray *ray) const {
     ProfilePhase prof(Prof::GenerateCameraRay);
@@ -63,7 +64,7 @@ Float OrthographicCamera::GenerateRay(const CameraSample &sample,
     }
     ray->time = Lerp(sample.time, shutterOpen, shutterClose);
     ray->medium = medium;
-    *ray = CameraToWorld(*ray);
+    *ray = CameraToWorld(*ray); // finally generate ray in world space.
     return 1;
 }
 
@@ -118,6 +119,7 @@ Float OrthographicCamera::GenerateRayDifferential(const CameraSample &sample,
     return 1;
 }
 
+// Create orthographic camera from parsed parameter set.
 OrthographicCamera *CreateOrthographicCamera(const ParamSet &params,
                                              const AnimatedTransform &cam2world,
                                              Film *film, const Medium *medium) {
