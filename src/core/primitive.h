@@ -47,6 +47,7 @@
 namespace pbrt {
 
 // Primitive Declarations
+// Abstract Base Class
 class Primitive {
   public:
     // Primitive Interface
@@ -69,6 +70,8 @@ class GeometricPrimitive : public Primitive {
     virtual Bounds3f WorldBound() const;
     virtual bool Intersect(const Ray &r, SurfaceInteraction *isect) const;
     virtual bool IntersectP(const Ray &r) const;
+
+    //Constructor
     GeometricPrimitive(const std::shared_ptr<Shape> &shape,
                        const std::shared_ptr<Material> &material,
                        const std::shared_ptr<AreaLight> &areaLight,
@@ -77,8 +80,10 @@ class GeometricPrimitive : public Primitive {
           material(material),
           areaLight(areaLight),
           mediumInterface(mediumInterface) {}
+
     const AreaLight *GetAreaLight() const;
     const Material *GetMaterial() const;
+
     void ComputeScatteringFunctions(SurfaceInteraction *isect,
                                     MemoryArena &arena, TransportMode mode,
                                     bool allowMultipleLobes) const;
@@ -95,20 +100,26 @@ class GeometricPrimitive : public Primitive {
 class TransformedPrimitive : public Primitive {
   public:
     // TransformedPrimitive Public Methods
+    // Constructor
     TransformedPrimitive(std::shared_ptr<Primitive> &primitive,
                          const AnimatedTransform &PrimitiveToWorld)
         : primitive(primitive), PrimitiveToWorld(PrimitiveToWorld) {}
+
     bool Intersect(const Ray &r, SurfaceInteraction *in) const;
     bool IntersectP(const Ray &r) const;
+
     const AreaLight *GetAreaLight() const { return nullptr; }
     const Material *GetMaterial() const { return nullptr; }
+
     void ComputeScatteringFunctions(SurfaceInteraction *isect,
                                     MemoryArena &arena, TransportMode mode,
-                                    bool allowMultipleLobes) const {
+                                    bool allowMultipleLobes) const
+    {
         LOG(FATAL) <<
             "TransformedPrimitive::ComputeScatteringFunctions() shouldn't be "
             "called";
     }
+
     Bounds3f WorldBound() const {
         return PrimitiveToWorld.MotionBounds(primitive->WorldBound());
     }

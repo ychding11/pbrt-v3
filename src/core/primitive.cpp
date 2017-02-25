@@ -40,15 +40,17 @@
 namespace pbrt {
 
 // Primitive Method Definitions
+// Destructor
 Primitive::~Primitive() {}
-const AreaLight *Aggregate::GetAreaLight() const {
+
+const AreaLight* Aggregate::GetAreaLight() const {
     LOG(FATAL) <<
         "Aggregate::GetAreaLight() method"
         "called; should have gone to GeometricPrimitive";
     return nullptr;
 }
 
-const Material *Aggregate::GetMaterial() const {
+const Material* Aggregate::GetMaterial() const {
     LOG(FATAL) <<
         "Aggregate::GetMaterial() method"
         "called; should have gone to GeometricPrimitive";
@@ -65,14 +67,16 @@ void Aggregate::ComputeScatteringFunctions(SurfaceInteraction *isect,
 }
 
 // TransformedPrimitive Method Definitions
-bool TransformedPrimitive::Intersect(const Ray &r,
-                                     SurfaceInteraction *isect) const {
+bool TransformedPrimitive::Intersect(const Ray &r, SurfaceInteraction *isect) const
+{
     // Compute _ray_ after transformation by _PrimitiveToWorld_
     Transform InterpolatedPrimToWorld;
     PrimitiveToWorld.Interpolate(r.time, &InterpolatedPrimToWorld);
     Ray ray = Inverse(InterpolatedPrimToWorld)(r);
+
     if (!primitive->Intersect(ray, isect)) return false;
     r.tMax = ray.tMax;
+
     // Transform instance's intersection data to world space
     if (!InterpolatedPrimToWorld.IsIdentity())
         *isect = InterpolatedPrimToWorld(*isect);
@@ -80,7 +84,8 @@ bool TransformedPrimitive::Intersect(const Ray &r,
     return true;
 }
 
-bool TransformedPrimitive::IntersectP(const Ray &r) const {
+bool TransformedPrimitive::IntersectP(const Ray &r) const
+{
     Transform InterpolatedPrimToWorld;
     PrimitiveToWorld.Interpolate(r.time, &InterpolatedPrimToWorld);
     Transform InterpolatedWorldToPrim = Inverse(InterpolatedPrimToWorld);
@@ -90,17 +95,20 @@ bool TransformedPrimitive::IntersectP(const Ray &r) const {
 // GeometricPrimitive Method Definitions
 Bounds3f GeometricPrimitive::WorldBound() const { return shape->WorldBound(); }
 
-bool GeometricPrimitive::IntersectP(const Ray &r) const {
+bool GeometricPrimitive::IntersectP(const Ray &r) const
+{
     return shape->IntersectP(r);
 }
 
-bool GeometricPrimitive::Intersect(const Ray &r,
-                                   SurfaceInteraction *isect) const {
+// isect is an output param
+bool GeometricPrimitive::Intersect(const Ray &r, SurfaceInteraction *isect) const
+{
     Float tHit;
     if (!shape->Intersect(r, &tHit, isect)) return false;
     r.tMax = tHit;
     isect->primitive = this;
     CHECK_GE(Dot(isect->n, isect->shading.n), 0.);
+
     // Initialize _SurfaceInteraction::mediumInterface_ after _Shape_
     // intersection
     if (mediumInterface.IsMediumTransition())
@@ -120,7 +128,8 @@ const Material *GeometricPrimitive::GetMaterial() const {
 
 void GeometricPrimitive::ComputeScatteringFunctions(
     SurfaceInteraction *isect, MemoryArena &arena, TransportMode mode,
-    bool allowMultipleLobes) const {
+    bool allowMultipleLobes) const
+{
     ProfilePhase p(Prof::ComputeScatteringFuncs);
     if (material)
         material->ComputeScatteringFunctions(isect, arena, mode,
