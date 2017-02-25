@@ -230,9 +230,14 @@ static std::vector<ParamListItem> cur_paramlist;
 
 static ParamArray *cur_array = nullptr;
 
-static void AddArrayElement(void *elem) {
-    if (cur_array->nelems >= cur_array->allocated) {
+// add elem into continous memory block.
+static void AddArrayElement(void *elem)
+{
+	//Check element number and capacity.
+    if (cur_array->nelems >= cur_array->allocated)
+    {
         cur_array->allocated = 2*cur_array->allocated + 1;
+	// realloc may move the memory block to new location.
         cur_array->array = realloc(cur_array->array,
             cur_array->allocated*cur_array->element_size);
     }
@@ -247,7 +252,10 @@ static void AddArrayElement(void *elem) {
 
 
 
-static void ArrayFree(ParamArray *ra) {
+static void ArrayFree(ParamArray *ra)
+{
+	// string stores the pointer. It needs special handle even if it is 
+	// a continuos memory block.
     if (ra->isString && ra->array)
         for (int i = 0; i < ra->nelems; ++i) free(((char **)ra->array)[i]);
     free(ra->array);
@@ -256,7 +264,8 @@ static void ArrayFree(ParamArray *ra) {
 
 
 
-static void FreeArgs() {
+static void FreeArgs()
+{
     for (size_t i = 0; i < cur_paramlist.size(); ++i)
         free((char *)cur_paramlist[i].arg);
     cur_paramlist.erase(cur_paramlist.begin(), cur_paramlist.end());
@@ -264,8 +273,8 @@ static void FreeArgs() {
 
 
 
-static bool VerifyArrayLength(ParamArray *arr, int required,
-    const char *command) {
+static bool VerifyArrayLength(ParamArray *arr, int required, const char *command)
+{
     if (arr->nelems != required) {
         Error("\"%s\" requires a %d element array! (%d found)",
                     command, required, arr->nelems);
@@ -280,6 +289,7 @@ enum { PARAM_TYPE_INT, PARAM_TYPE_BOOL, PARAM_TYPE_FLOAT,
     PARAM_TYPE_VECTOR3, PARAM_TYPE_NORMAL, PARAM_TYPE_RGB, PARAM_TYPE_XYZ,
     PARAM_TYPE_BLACKBODY, PARAM_TYPE_SPECTRUM,
     PARAM_TYPE_STRING, PARAM_TYPE_TEXTURE };
+
 static const char *paramTypeToName(int type);
 static void InitParamSet(ParamSet &ps, SpectrumType);
 static bool lookupType(const char *name, int *type, std::string &sname);
