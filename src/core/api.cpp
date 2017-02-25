@@ -728,11 +728,13 @@ Film *MakeFilm(const std::string &name, const ParamSet &paramSet,
 }
 
 // API Function Definitions
-void pbrtInit(const Options &opt) {
+void pbrtInit(const Options &opt)
+{
     PbrtOptions = opt;
     // API Initialization
     if (currentApiState != APIState::Uninitialized)
         Error("pbrtInit() has already been called.");
+
     currentApiState = APIState::OptionsBlock;
     renderOptions.reset(new RenderOptions);
     graphicsState = GraphicsState();
