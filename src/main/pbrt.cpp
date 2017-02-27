@@ -71,15 +71,18 @@ Reformatting options:
 }
 
 // main program
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     google::InitGoogleLogging(argv[0]);
     FLAGS_stderrthreshold = 1; // Warning and above.
 
     Options options;
     std::vector<std::string> filenames;
     // Process command-line arguments
-    for (int i = 1; i < argc; ++i) {
-        if (!strcmp(argv[i], "--nthreads") || !strcmp(argv[i], "-nthreads")) {
+    for (int i = 1; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "--nthreads") || !strcmp(argv[i], "-nthreads"))
+	{
             if (i + 1 == argc)
                 usage("missing value after --nthreads argument");
             options.nThreads = atoi(argv[++i]);
@@ -146,17 +149,22 @@ int main(int argc, char *argv[]) {
         printf("See the file LICENSE.txt for the conditions of the license.\n");
         fflush(stdout);
     }
+
     pbrtInit(options);
+
     // Process scene description
-    if (filenames.size() == 0) {
+    if (filenames.size() == 0)
+    {
         // Parse scene from standard input
         ParseFile("-");
-    } else {
+    }
+    else
+    {
         // Parse scene from input files
         for (const std::string &f : filenames)
-            if (!ParseFile(f))
-                Error("Couldn't open scene file \"%s\"", f.c_str());
+            if (!ParseFile(f)) Error("Couldn't open scene file \"%s\"", f.c_str());
     }
+
     pbrtCleanup();
     return 0;
 }

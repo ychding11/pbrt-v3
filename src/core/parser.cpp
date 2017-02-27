@@ -42,7 +42,8 @@ extern int yydebug;
 namespace pbrt {
 
 // Parsing Global Interface
-bool ParseFile(const std::string &filename) {
+bool ParseFile(const std::string &filename)
+{
     extern std::string current_file;
     extern int line_num;
 
@@ -52,11 +53,14 @@ bool ParseFile(const std::string &filename) {
 
     if (filename == "-")
         yyin = stdin;
-    else {
+    else
+    {
         yyin = fopen(filename.c_str(), "r");
         SetSearchDirectory(DirectoryContaining(filename));
     }
-    if (yyin != nullptr) {
+
+    if (yyin != nullptr)
+    {
         current_file = filename;
         if (yyin == stdin) current_file = "<standard input>";
         line_num = 1;

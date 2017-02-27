@@ -50,7 +50,8 @@ PerspectiveCamera::PerspectiveCamera(const AnimatedTransform &CameraToWorld,
                                      const Medium *medium)
     : ProjectiveCamera(CameraToWorld, Perspective(fov, 1e-2f, 1000.f),
                        screenWindow, shutterOpen, shutterClose, lensRadius,
-                       focalDistance, film, medium) {
+                       focalDistance, film, medium)  //construct base class.
+    {
     // Compute differential changes in origin for perspective camera rays
     dxCamera =
         (RasterToCamera(Point3f(1, 0, 0)) - RasterToCamera(Point3f(0, 0, 0)));
@@ -72,7 +73,7 @@ Float PerspectiveCamera::GenerateRay(const CameraSample &sample,
     // Compute raster and camera sample positions
     Point3f pFilm = Point3f(sample.pFilm.x, sample.pFilm.y, 0);
     Point3f pCamera = RasterToCamera(pFilm);
-    *ray = Ray(Point3f(0, 0, 0), Normalize(Vector3f(pCamera)));
+    *ray = Ray(Point3f(0, 0, 0), Normalize(Vector3f(pCamera))); // ray direction is normalized.
     // Modify ray for depth of field
     if (lensRadius > 0) {
         // Sample point on lens
@@ -83,6 +84,7 @@ Float PerspectiveCamera::GenerateRay(const CameraSample &sample,
         Point3f pFocus = (*ray)(ft);
 
         // Update ray for effect of lens
+	// Current direction is in camera space.
         ray->o = Point3f(pLens.x, pLens.y, 0);
         ray->d = Normalize(pFocus - ray->o);
     }
