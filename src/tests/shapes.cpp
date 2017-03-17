@@ -204,6 +204,67 @@ TEST(Triangle, Reintersect) {
     }
 }
 
+// My own test for intersection with triangle
+TEST(Triangle, Myintersect)
+{
+    for (int i = 0; i < 1000; ++i)
+    {
+        RNG rng(i);
+        std::shared_ptr<Triangle> tri = GetRandomTriangle([&]() { return pExp(rng); });
+        if (!tri) continue;
+
+        // Sample a point on the triangle surface to shoot the ray toward.
+        Point2f u;
+        u[0] = rng.UniformFloat();
+        u[1] = rng.UniformFloat();
+        Float pdf;
+        Interaction pTri = tri->Sample(u, &pdf);
+
+        // Choose a ray origin.
+        Point3f o;
+        o[0] = pExp(rng);
+        o[1] = pExp(rng);
+        o[2] = pExp(rng);
+
+        // Intersect the ray with the triangle.
+        Ray r(o, pTri.p - o);
+        Float tHit;
+        SurfaceInteraction isect;
+        if (!tri->Intersect(r, &tHit, &isect, false))
+            // We should almost always find an intersection, but rarely
+            // miss, due to round-off error. Just do another go-around in
+            // this case.
+            continue;
+
+        // Now trace a bunch of rays leaving the intersection point.
+        for (int j = 0; j < 100; ++j)
+	{
+            // Random direction leaving the intersection point.
+            Point2f u;
+            u[0] = rng.UniformFloat();
+            u[1] = rng.UniformFloat();
+            Vector3f w = UniformSampleSphere(u);
+            Ray rOut = isect.SpawnRay(w);
+
+            EXPECT_FALSE(tri->IntersectP(rOut));
+
+            SurfaceInteraction spawnIsect;
+            Float tHit;
+            EXPECT_FALSE(tri->Intersect(rOut, &tHit, &isect, false));
+
+            // Choose a random point to trace rays to.
+            Point3f p2;
+            p2[0] = pExp(rng);
+            p2[1] = pExp(rng);
+            p2[2] = pExp(rng);
+
+            rOut = isect.SpawnRayTo(p2);
+
+            EXPECT_FALSE(tri->IntersectP(rOut));
+            EXPECT_FALSE(tri->Intersect(rOut, &tHit, &isect, false));
+        }
+    }
+}
 // Computes the projected solid angle subtended by a series of random
 // triangles both using uniform spherical sampling as well as
 // Triangle::Sample(), in order to verify Triangle::Sample().
