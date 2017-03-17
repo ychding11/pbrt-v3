@@ -54,10 +54,8 @@ class AtomicFloat {
     // AtomicFloat Public Methods
     explicit AtomicFloat(Float v = 0) { bits = FloatToBits(v); }
     operator Float() const { return BitsToFloat(bits); }
-    Float operator=(Float v) {
-        bits = FloatToBits(v);
-        return v;
-    }
+    Float operator=(Float v) { bits = FloatToBits(v); return v; }
+
     void Add(Float v) {
 #ifdef PBRT_FLOAT_AS_DOUBLE
         uint64_t oldBits = bits, newBits;
@@ -98,8 +96,7 @@ class Barrier {
     int count;
 };
 
-void ParallelFor(std::function<void(int64_t)> func, int64_t count,
-                 int chunkSize = 1);
+void ParallelFor(std::function<void(int64_t)> func, int64_t count, int chunkSize = 1);
 extern PBRT_THREAD_LOCAL int ThreadIndex;
 void ParallelFor2D(std::function<void(Point2i)> func, const Point2i &count);
 int MaxThreadIndex();

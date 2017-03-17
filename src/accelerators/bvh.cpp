@@ -656,7 +656,8 @@ int BVHAccel::flattenBVHTree(BVHBuildNode *node, int *offset) {
 
 BVHAccel::~BVHAccel() { FreeAligned(nodes); }
 
-bool BVHAccel::Intersect(const Ray &ray, SurfaceInteraction *isect) const {
+bool BVHAccel::Intersect(const Ray &ray, SurfaceInteraction *isect) const
+{
     if (!nodes) return false;
     ProfilePhase p(Prof::AccelIntersect);
     bool hit = false;
@@ -665,30 +666,39 @@ bool BVHAccel::Intersect(const Ray &ray, SurfaceInteraction *isect) const {
     // Follow ray through BVH nodes to find primitive intersections
     int toVisitOffset = 0, currentNodeIndex = 0;
     int nodesToVisit[64];
-    while (true) {
+    while (true)
+	{
         const LinearBVHNode *node = &nodes[currentNodeIndex];
         // Check ray against BVH node
-        if (node->bounds.IntersectP(ray, invDir, dirIsNeg)) {
-            if (node->nPrimitives > 0) {
+        if (node->bounds.IntersectP(ray, invDir, dirIsNeg))
+		{
+            if (node->nPrimitives > 0)
+			{
                 // Intersect ray with primitives in leaf BVH node
                 for (int i = 0; i < node->nPrimitives; ++i)
-                    if (primitives[node->primitivesOffset + i]->Intersect(
-                            ray, isect))
+                    if (primitives[node->primitivesOffset + i]->Intersect( ray, isect))
                         hit = true;
                 if (toVisitOffset == 0) break;
                 currentNodeIndex = nodesToVisit[--toVisitOffset];
-            } else {
+            }
+			else
+			{
                 // Put far BVH node on _nodesToVisit_ stack, advance to near
                 // node
-                if (dirIsNeg[node->axis]) {
+                if (dirIsNeg[node->axis])
+				{
                     nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
                     currentNodeIndex = node->secondChildOffset;
-                } else {
+                }
+				else
+				{
                     nodesToVisit[toVisitOffset++] = node->secondChildOffset;
                     currentNodeIndex = currentNodeIndex + 1;
                 }
             }
-        } else {
+        }
+		else
+		{
             if (toVisitOffset == 0) break;
             currentNodeIndex = nodesToVisit[--toVisitOffset];
         }

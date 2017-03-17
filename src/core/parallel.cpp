@@ -51,8 +51,10 @@ static std::mutex workListMutex;
 // Bookkeeping variables to help with the implementation of
 // MergeWorkerThreadStats().
 static std::atomic<bool> reportWorkerStats{false};
+
 // Number of workers that still need to report their stats.
 static std::atomic<int> reporterCount;
+
 // After kicking the workers to report their stats, the main thread waits
 // on this condition variable until they've all done so.
 static std::condition_variable reportDoneCondition;
@@ -61,18 +63,18 @@ static std::mutex reportDoneMutex;
 class ParallelForLoop {
   public:
     // ParallelForLoop Public Methods
-    ParallelForLoop(std::function<void(int64_t)> func1D, int64_t maxIndex,
-                    int chunkSize, uint64_t profilerState)
+    ParallelForLoop(std::function<void(int64_t)> func1D, int64_t maxIndex, int chunkSize, uint64_t profilerState)
         : func1D(std::move(func1D)),
           maxIndex(maxIndex),
           chunkSize(chunkSize),
           profilerState(profilerState) {}
-    ParallelForLoop(const std::function<void(Point2i)> &f, const Point2i &count,
-                    uint64_t profilerState)
+
+    ParallelForLoop(const std::function<void(Point2i)> &f, const Point2i &count, uint64_t profilerState)
         : func2D(f),
           maxIndex(count.x * count.y),
           chunkSize(1),
-          profilerState(profilerState) {
+          profilerState(profilerState)
+	{
         nX = count.x;
     }
 
@@ -89,7 +91,8 @@ class ParallelForLoop {
     int nX = -1;
 
     // ParallelForLoop Private Methods
-    bool Finished() const {
+    bool Finished() const
+	{
         return nextIndex >= maxIndex && activeWorkers == 0;
     }
 };
@@ -127,8 +130,10 @@ static void workerThreadFunc(int tIndex, std::shared_ptr<Barrier> barrier) {
     barrier.reset();
 
     std::unique_lock<std::mutex> lock(workListMutex);
-    while (!shutdownThreads) {
-        if (reportWorkerStats) {
+    while (!shutdownThreads)
+	{
+        if (reportWorkerStats)
+		{
             ReportThreadStats();
             if (--reporterCount == 0)
                 // Once all worker threads have merged their stats, wake up
@@ -136,10 +141,14 @@ static void workerThreadFunc(int tIndex, std::shared_ptr<Barrier> barrier) {
                 reportDoneCondition.notify_one();
             // Now sleep again.
             workListCondition.wait(lock);
-        } else if (!workList) {
+        }
+		else if (!workList)
+		{
             // Sleep until there are more tasks to run
             workListCondition.wait(lock);
-        } else {
+        }
+		else
+		{
             // Get work from _workList_ and run loop iterations
             ParallelForLoop &loop = *workList;
 
@@ -147,8 +156,7 @@ static void workerThreadFunc(int tIndex, std::shared_ptr<Barrier> barrier) {
 
             // Find the set of loop iterations to run next
             int64_t indexStart = loop.nextIndex;
-            int64_t indexEnd =
-                std::min(indexStart + loop.chunkSize, loop.maxIndex);
+            int64_t indexEnd = std::min(indexStart + loop.chunkSize, loop.maxIndex);
 
             // Update _loop_ to reflect iterations this thread will run
             loop.nextIndex = indexEnd;
@@ -157,14 +165,18 @@ static void workerThreadFunc(int tIndex, std::shared_ptr<Barrier> barrier) {
 
             // Run loop indices in _[indexStart, indexEnd)_
             lock.unlock();
-            for (int64_t index = indexStart; index < indexEnd; ++index) {
+
+            for (int64_t index = indexStart; index < indexEnd; ++index)
+			{
                 uint64_t oldState = ProfilerState;
                 ProfilerState = loop.profilerState;
-                if (loop.func1D) {
+                if (loop.func1D)
+				{
                     loop.func1D(index);
                 }
-                // Handle other types of loops
-                else {
+                else
+				{
+					// Handle other types of loops
                     CHECK(loop.func2D);
                     loop.func2D(Point2i(index % loop.nX, index / loop.nX));
                 }
@@ -181,19 +193,19 @@ static void workerThreadFunc(int tIndex, std::shared_ptr<Barrier> barrier) {
 }
 
 // Parallel Definitions
-void ParallelFor(std::function<void(int64_t)> func, int64_t count,
-                 int chunkSize) {
+void ParallelFor(std::function<void(int64_t)> func, int64_t count, int chunkSize)
+{
     CHECK(threads.size() > 0 || MaxThreadIndex() == 1);
 
     // Run iterations immediately if not using threads or if _count_ is small
-    if (threads.size() == 0 || count < chunkSize) {
+    if (threads.size() == 0 || count < chunkSize)
+	{
         for (int64_t i = 0; i < count; ++i) func(i);
         return;
     }
 
     // Create and enqueue _ParallelForLoop_ for this loop
-    ParallelForLoop loop(std::move(func), count, chunkSize,
-                         CurrentProfilerState());
+    ParallelForLoop loop(std::move(func), count, chunkSize, CurrentProfilerState());
     workListMutex.lock();
     loop.next = workList;
     workList = &loop;
@@ -204,7 +216,8 @@ void ParallelFor(std::function<void(int64_t)> func, int64_t count,
     workListCondition.notify_all();
 
     // Help out with parallel loop iterations in the current thread
-    while (!loop.Finished()) {
+    while (!loop.Finished())
+	{
         // Run a chunk of loop iterations for _loop_
 
         // Find the set of loop iterations to run next
@@ -218,14 +231,17 @@ void ParallelFor(std::function<void(int64_t)> func, int64_t count,
 
         // Run loop indices in _[indexStart, indexEnd)_
         lock.unlock();
-        for (int64_t index = indexStart; index < indexEnd; ++index) {
+        for (int64_t index = indexStart; index < indexEnd; ++index)
+		{
             uint64_t oldState = ProfilerState;
             ProfilerState = loop.profilerState;
-            if (loop.func1D) {
+            if (loop.func1D)
+			{
                 loop.func1D(index);
             }
             // Handle other types of loops
-            else {
+            else
+			{
                 CHECK(loop.func2D);
                 loop.func2D(Point2i(index % loop.nX, index / loop.nX));
             }
@@ -240,20 +256,25 @@ void ParallelFor(std::function<void(int64_t)> func, int64_t count,
 
 PBRT_THREAD_LOCAL int ThreadIndex;
 
-int MaxThreadIndex() {
-    return PbrtOptions.nThreads == 0 ? NumSystemCores() : PbrtOptions.nThreads;
+int MaxThreadIndex()
+{
+    //return PbrtOptions.nThreads == 0 ? NumSystemCores() : PbrtOptions.nThreads;
+    return  NumSystemCores();
 }
 
-void ParallelFor2D(std::function<void(Point2i)> func, const Point2i &count) {
+void ParallelFor2D(std::function<void(Point2i)> func, const Point2i &count)
+{
     CHECK(threads.size() > 0 || MaxThreadIndex() == 1);
 
-    if (threads.size() == 0) {
+    if (threads.size() == 0)
+	{
         for (int y = 0; y < count.y; ++y)
             for (int x = 0; x < count.x; ++x) func(Point2i(x, y));
         return;
     }
 
     ParallelForLoop loop(std::move(func), count, CurrentProfilerState());
+
     {
         std::lock_guard<std::mutex> lock(workListMutex);
         loop.next = workList;
@@ -302,7 +323,8 @@ int NumSystemCores() {
     return std::max(1u, std::thread::hardware_concurrency());
 }
 
-void ParallelInit() {
+void ParallelInit()
+{
     CHECK_EQ(threads.size(), 0);
     int nThreads = MaxThreadIndex();
     ThreadIndex = 0;
@@ -321,7 +343,8 @@ void ParallelInit() {
     barrier->Wait();
 }
 
-void ParallelCleanup() {
+void ParallelCleanup()
+{
     if (threads.size() == 0) return;
 
     {
@@ -335,7 +358,8 @@ void ParallelCleanup() {
     shutdownThreads = false;
 }
 
-void MergeWorkerThreadStats() {
+void MergeWorkerThreadStats()
+{
     std::unique_lock<std::mutex> lock(workListMutex);
     std::unique_lock<std::mutex> doneLock(reportDoneMutex);
     // Set up state so that the worker threads will know that we would like
