@@ -48,31 +48,35 @@ struct SDVertex;
 #define PREV(i) (((i) + 2) % 3)
 
 // LoopSubdiv Local Structures
-struct SDVertex {
+struct SDVertex
+{
     // SDVertex Constructor
     SDVertex(const Point3f &p = Point3f(0, 0, 0)) : p(p) {}
 
     // SDVertex Methods
     int valence();
     void oneRing(Point3f *p);
+
     Point3f p;
     SDFace *startFace = nullptr;
-    SDVertex *child = nullptr;
-    bool regular = false, boundary = false;
+    SDVertex *child = nullptr; /* next level vertex if any. */
+    bool regular = false,/* regular vertex? */ boundary = false; /* on mesh boundary */
+    /* a closed triangle manifold has no boundary */
 };
 
-struct SDFace {
+/* stores most toplogy info about triangle manifold. */
+struct SDFace
+{
     // SDFace Constructor
-    SDFace() {
-        for (int i = 0; i < 3; ++i) {
-            v[i] = nullptr;
-            f[i] = nullptr;
-        }
+    SDFace()
+    {
+        for (int i = 0; i < 3; ++i) { v[i] = nullptr; f[i] = nullptr; }
         for (int i = 0; i < 4; ++i) children[i] = nullptr;
     }
 
     // SDFace Methods
-    int vnum(SDVertex *vert) const {
+    int vnum(SDVertex *vert) const
+    {
         for (int i = 0; i < 3; ++i)
             if (v[i] == vert) return i;
         LOG(FATAL) << "Basic logic error in SDFace::vnum()";
@@ -82,7 +86,8 @@ struct SDFace {
     SDFace *prevFace(SDVertex *vert) { return f[PREV(vnum(vert))]; }
     SDVertex *nextVert(SDVertex *vert) { return v[NEXT(vnum(vert))]; }
     SDVertex *prevVert(SDVertex *vert) { return v[PREV(vnum(vert))]; }
-    SDVertex *otherVert(SDVertex *v0, SDVertex *v1) {
+    SDVertex *otherVert(SDVertex *v0, SDVertex *v1)
+    {
         for (int i = 0; i < 3; ++i)
             if (v[i] != v0 && v[i] != v1) return v[i];
         LOG(FATAL) << "Basic logic error in SDVertex::otherVert()";
@@ -90,12 +95,14 @@ struct SDFace {
     }
     SDVertex *v[3];
     SDFace *f[3];
-    SDFace *children[4];
+    SDFace *children[4]; /* next level subdivision. */
 };
 
+/* triangle manifold edge */
 struct SDEdge {
     // SDEdge Constructor
-    SDEdge(SDVertex *v0 = nullptr, SDVertex *v1 = nullptr) {
+    SDEdge(SDVertex *v0 = nullptr, SDVertex *v1 = nullptr)
+    {
         v[0] = std::min(v0, v1);
         v[1] = std::max(v0, v1);
         f[0] = f[1] = nullptr;
@@ -103,10 +110,12 @@ struct SDEdge {
     }
 
     // SDEdge Comparison Function
-    bool operator<(const SDEdge &e2) const {
+    bool operator<(const SDEdge &e2) const
+    {
         if (v[0] == e2.v[0]) return v[1] < e2.v[1];
         return v[0] < e2.v[0];
     }
+
     SDVertex *v[2];
     SDFace *f[2];
     int f0edgeNum;
@@ -117,9 +126,11 @@ static Point3f weightOneRing(SDVertex *vert, Float beta);
 static Point3f weightBoundary(SDVertex *vert, Float beta);
 
 // LoopSubdiv Inline Functions
-inline int SDVertex::valence() {
+inline int SDVertex::valence()
+{
     SDFace *f = startFace;
-    if (!boundary) {
+    if (!boundary)
+    {
         // Compute valence of interior vertex
         int nf = 1;
         while ((f = f->nextFace(this)) != startFace) ++nf;
@@ -134,14 +145,16 @@ inline int SDVertex::valence() {
     }
 }
 
-inline Float beta(int valence) {
+inline Float beta(int valence)
+{
     if (valence == 3)
         return 3.f / 16.f;
     else
         return 3.f / (8.f * valence);
 }
 
-inline Float loopGamma(int valence) {
+inline Float loopGamma(int valence)
+{
     return 1.f / (valence + 3.f / (8.f * beta(valence)));
 }
 
@@ -149,7 +162,8 @@ inline Float loopGamma(int valence) {
 static std::vector<std::shared_ptr<Shape>> LoopSubdivide(
     const Transform *ObjectToWorld, const Transform *WorldToObject,
     bool reverseOrientation, int nLevels, int nIndices,
-    const int *vertexIndices, int nVertices, const Point3f *p) {
+    const int *vertexIndices, int nVertices, const Point3f *p)
+{
     std::vector<SDVertex *> vertices;
     std::vector<SDFace *> faces;
     // Allocate _LoopSubdiv_ vertices and faces
