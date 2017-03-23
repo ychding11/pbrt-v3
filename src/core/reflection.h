@@ -273,7 +273,8 @@ class Fresnel {
     virtual std::string ToString() const = 0;
 };
 
-inline std::ostream &operator<<(std::ostream &os, const Fresnel &f) {
+inline std::ostream &operator<<(std::ostream &os, const Fresnel &f)
+{
     os << f.ToString();
     return os;
 }
@@ -282,28 +283,32 @@ class FresnelConductor : public Fresnel
 {
   public:
     // FresnelConductor Public Methods
-    Spectrum Evaluate(Float cosThetaI) const;
     FresnelConductor(const Spectrum &etaI, const Spectrum &etaT,
                      const Spectrum &k)
         : etaI(etaI), etaT(etaT), k(k) {}
-    std::string ToString() const;
+
+    std::string ToString() const override;
+    Spectrum Evaluate(Float cosThetaI) const override;
 
   private:
     Spectrum etaI, etaT, k;
 };
 
-class FresnelDielectric : public Fresnel {
+class FresnelDielectric : public Fresnel
+{
   public:
     // FresnelDielectric Public Methods
-    Spectrum Evaluate(Float cosThetaI) const;
     FresnelDielectric(Float etaI, Float etaT) : etaI(etaI), etaT(etaT) {}
-    std::string ToString() const;
+
+    std::string ToString() const override;
+    Spectrum Evaluate(Float cosThetaI) const override;
 
   private:
     Float etaI, etaT;
 };
 
-class FresnelNoOp : public Fresnel {
+class FresnelNoOp : public Fresnel
+{
   public:
     Spectrum Evaluate(Float) const { return Spectrum(1.); }
     std::string ToString() const { return "[ FresnelNoOp ]"; }
@@ -316,13 +321,14 @@ class SpecularReflection : public BxDF {
         : BxDF(BxDFType(BSDF_REFLECTION | BSDF_SPECULAR)),
           R(R),
           fresnel(fresnel) {}
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override {
         return Spectrum(0.f);
     }
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &sample,
-                      Float *pdf, BxDFType *sampledType) const;
-    Float Pdf(const Vector3f &wo, const Vector3f &wi) const { return 0; }
-    std::string ToString() const;
+                      Float *pdf, BxDFType *sampledType) const override;
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const override { return 0; }
+    std::string ToString() const override;
 
   private:
     // SpecularReflection Private Data
@@ -341,13 +347,14 @@ class SpecularTransmission : public BxDF {
           etaB(etaB),
           fresnel(etaA, etaB),
           mode(mode) {}
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override {
         return Spectrum(0.f);
     }
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &sample,
-                      Float *pdf, BxDFType *sampledType) const;
-    Float Pdf(const Vector3f &wo, const Vector3f &wi) const { return 0; }
-    std::string ToString() const;
+                      Float *pdf, BxDFType *sampledType) const override ;
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const override { return 0; }
+    std::string ToString() const override;
 
   private:
     // SpecularTransmission Private Data
@@ -369,13 +376,14 @@ class FresnelSpecular : public BxDF {
           etaB(etaB),
           fresnel(etaA, etaB),
           mode(mode) {}
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const {
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override {
         return Spectrum(0.f);
     }
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u,
-                      Float *pdf, BxDFType *sampledType) const;
-    Float Pdf(const Vector3f &wo, const Vector3f &wi) const { return 0; }
-    std::string ToString() const;
+                      Float *pdf, BxDFType *sampledType) const override;
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const override{ return 0; }
+    std::string ToString() const override;
 
   private:
     // FresnelSpecular Private Data
@@ -390,10 +398,11 @@ class LambertianReflection : public BxDF {
     // LambertianReflection Public Methods
     LambertianReflection(const Spectrum &R)
         : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)), R(R) {}
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
-    Spectrum rho(const Vector3f &, int, const Point2f *) const { return R; }
-    Spectrum rho(int, const Point2f *, const Point2f *) const { return R; }
-    std::string ToString() const;
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override;
+    Spectrum rho(const Vector3f &, int, const Point2f *) const override { return R; }
+    Spectrum rho(int, const Point2f *, const Point2f *) const override { return R; }
+    std::string ToString() const override;
 
   private:
     // LambertianReflection Private Data
@@ -405,12 +414,13 @@ class LambertianTransmission : public BxDF {
     // LambertianTransmission Public Methods
     LambertianTransmission(const Spectrum &T)
         : BxDF(BxDFType(BSDF_TRANSMISSION | BSDF_DIFFUSE)), T(T) {}
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
-    Spectrum rho(const Vector3f &, int, const Point2f *) const { return T; }
-    Spectrum rho(int, const Point2f *, const Point2f *) const { return T; }
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override ;
+    Spectrum rho(const Vector3f &, int, const Point2f *) const override { return T; }
+    Spectrum rho(int, const Point2f *, const Point2f *) const override { return T; }
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u,
-                      Float *pdf, BxDFType *sampledType) const;
-    Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
+                      Float *pdf, BxDFType *sampledType) const override;
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const override;
     std::string ToString() const;
 
   private:
@@ -421,7 +431,6 @@ class LambertianTransmission : public BxDF {
 class OrenNayar : public BxDF {
   public:
     // OrenNayar Public Methods
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
     OrenNayar(const Spectrum &R, Float sigma)
         : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)), R(R) {
         sigma = Radians(sigma);
@@ -429,7 +438,8 @@ class OrenNayar : public BxDF {
         A = 1.f - (sigma2 / (2.f * (sigma2 + 0.33f)));
         B = 0.45f * sigma2 / (sigma2 + 0.09f);
     }
-    std::string ToString() const;
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override;
+    std::string ToString() const override;
 
   private:
     // OrenNayar Private Data
@@ -446,11 +456,12 @@ class MicrofacetReflection : public BxDF {
           R(R),
           distribution(distribution),
           fresnel(fresnel) {}
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override;
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u,
-                      Float *pdf, BxDFType *sampledType) const;
-    Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
-    std::string ToString() const;
+                      Float *pdf, BxDFType *sampledType) const override;
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const override;
+    std::string ToString() const override;
 
   private:
     // MicrofacetReflection Private Data
@@ -472,10 +483,11 @@ class MicrofacetTransmission : public BxDF {
           etaB(etaB),
           fresnel(etaA, etaB),
           mode(mode) {}
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
+
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override;
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u,
-                      Float *pdf, BxDFType *sampledType) const;
-    Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
+                      Float *pdf, BxDFType *sampledType) const override;
+    Float Pdf(const Vector3f &wo, const Vector3f &wi) const override;
     std::string ToString() const;
 
   private:
@@ -492,6 +504,7 @@ class FresnelBlend : public BxDF {
     // FresnelBlend Public Methods
     FresnelBlend(const Spectrum &Rd, const Spectrum &Rs,
                  MicrofacetDistribution *distrib);
+
     Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
     Spectrum SchlickFresnel(Float cosTheta) const {
         auto pow5 = [](Float v) { return (v * v) * (v * v) * v; };
