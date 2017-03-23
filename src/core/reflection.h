@@ -207,20 +207,24 @@ inline std::ostream &operator<<(std::ostream &os, const BSDF &bsdf) {
 }
 
 // BxDF Declarations
+// This virtual class is a Base class.
 class BxDF {
   public:
     // BxDF Interface
     virtual ~BxDF() {}
     BxDF(BxDFType type) : type(type) {}
     bool MatchesFlags(BxDFType t) const { return (type & t) == type; }
+
     virtual Spectrum f(const Vector3f &wo, const Vector3f &wi) const = 0;
     virtual Spectrum Sample_f(const Vector3f &wo, Vector3f *wi,
                               const Point2f &sample, Float *pdf,
                               BxDFType *sampledType = nullptr) const;
+
     virtual Spectrum rho(const Vector3f &wo, int nSamples,
                          const Point2f *samples) const;
     virtual Spectrum rho(int nSamples, const Point2f *samples1,
                          const Point2f *samples2) const;
+
     virtual Float Pdf(const Vector3f &wo, const Vector3f &wi) const;
     virtual std::string ToString() const = 0;
 
@@ -238,14 +242,18 @@ class ScaledBxDF : public BxDF {
     // ScaledBxDF Public Methods
     ScaledBxDF(BxDF *bxdf, const Spectrum &scale)
         : BxDF(BxDFType(bxdf->type)), bxdf(bxdf), scale(scale) {}
+
     Spectrum rho(const Vector3f &w, int nSamples,
-                 const Point2f *samples) const {
+                 const Point2f *samples) const
+    {
         return scale * bxdf->rho(w, nSamples, samples);
     }
     Spectrum rho(int nSamples, const Point2f *samples1,
-                 const Point2f *samples2) const {
+                 const Point2f *samples2) const
+    {
         return scale * bxdf->rho(nSamples, samples1, samples2);
     }
+
     Spectrum f(const Vector3f &wo, const Vector3f &wi) const;
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &sample,
                       Float *pdf, BxDFType *sampledType) const;
@@ -270,7 +278,8 @@ inline std::ostream &operator<<(std::ostream &os, const Fresnel &f) {
     return os;
 }
 
-class FresnelConductor : public Fresnel {
+class FresnelConductor : public Fresnel
+{
   public:
     // FresnelConductor Public Methods
     Spectrum Evaluate(Float cosThetaI) const;

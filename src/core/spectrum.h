@@ -101,7 +101,8 @@ template <int nSpectrumSamples>
 class CoefficientSpectrum {
   public:
     // CoefficientSpectrum Public Methods
-    CoefficientSpectrum(Float v = 0.f) {
+    CoefficientSpectrum(Float v = 0.f)
+    {
         for (int i = 0; i < nSpectrumSamples; ++i) c[i] = v;
         DCHECK(!HasNaNs());
     }
@@ -117,7 +118,8 @@ class CoefficientSpectrum {
         return *this;
     }
 #endif  // DEBUG
-    void Print(FILE *f) const {
+    void Print(FILE *f) const
+    {
         fprintf(f, "[ ");
         for (int i = 0; i < nSpectrumSamples; ++i) {
             fprintf(f, "%f", c[i]);
@@ -125,12 +127,15 @@ class CoefficientSpectrum {
         }
         fprintf(f, "]");
     }
-    CoefficientSpectrum &operator+=(const CoefficientSpectrum &s2) {
+    CoefficientSpectrum &operator+=(const CoefficientSpectrum &s2)
+    {
         DCHECK(!s2.HasNaNs());
         for (int i = 0; i < nSpectrumSamples; ++i) c[i] += s2.c[i];
         return *this;
     }
-    CoefficientSpectrum operator+(const CoefficientSpectrum &s2) const {
+    // Overload operator as a member function.
+    CoefficientSpectrum operator+(const CoefficientSpectrum &s2) const
+    {
         DCHECK(!s2.HasNaNs());
         CoefficientSpectrum ret = *this;
         for (int i = 0; i < nSpectrumSamples; ++i) ret.c[i] += s2.c[i];
@@ -292,8 +297,10 @@ class SampledSpectrum : public CoefficientSpectrum<nSpectralSamples> {
     SampledSpectrum(Float v = 0.f) : CoefficientSpectrum(v) {}
     SampledSpectrum(const CoefficientSpectrum<nSpectralSamples> &v)
         : CoefficientSpectrum<nSpectralSamples>(v) {}
+
     static SampledSpectrum FromSampled(const Float *lambda, const Float *v,
-                                       int n) {
+                                       int n)
+    {
         // Sort samples if unordered, use sorted for returned spectrum
         if (!SpectrumSamplesSorted(lambda, v, n)) {
             std::vector<Float> slambda(&lambda[0], &lambda[n]);
@@ -312,6 +319,7 @@ class SampledSpectrum : public CoefficientSpectrum<nSpectralSamples> {
         }
         return r;
     }
+
     static void Init() {
         // Compute XYZ matching functions for _SampledSpectrum_
         for (int i = 0; i < nSpectralSamples; ++i) {
@@ -319,12 +327,9 @@ class SampledSpectrum : public CoefficientSpectrum<nSpectralSamples> {
                              sampledLambdaStart, sampledLambdaEnd);
             Float wl1 = Lerp(Float(i + 1) / Float(nSpectralSamples),
                              sampledLambdaStart, sampledLambdaEnd);
-            X.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_X, nCIESamples, wl0,
-                                            wl1);
-            Y.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_Y, nCIESamples, wl0,
-                                            wl1);
-            Z.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_Z, nCIESamples, wl0,
-                                            wl1);
+            X.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_X, nCIESamples, wl0, wl1);
+            Y.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_Y, nCIESamples, wl0, wl1);
+            Z.c[i] = AverageSpectrumSamples(CIE_lambda, CIE_Z, nCIESamples, wl0, wl1);
         }
 
         // Compute RGB to spectrum functions for _SampledSpectrum_
@@ -377,6 +382,7 @@ class SampledSpectrum : public CoefficientSpectrum<nSpectralSamples> {
                                        nRGB2SpectSamples, wl0, wl1);
         }
     }
+
     void ToXYZ(Float xyz[3]) const {
         xyz[0] = xyz[1] = xyz[2] = 0.f;
         for (int i = 0; i < nSpectralSamples; ++i) {
@@ -390,18 +396,22 @@ class SampledSpectrum : public CoefficientSpectrum<nSpectralSamples> {
         xyz[1] *= scale;
         xyz[2] *= scale;
     }
+
     Float y() const {
         Float yy = 0.f;
         for (int i = 0; i < nSpectralSamples; ++i) yy += Y.c[i] * c[i];
         return yy * Float(sampledLambdaEnd - sampledLambdaStart) /
                Float(CIE_Y_integral * nSpectralSamples);
     }
+
     void ToRGB(Float rgb[3]) const {
         Float xyz[3];
         ToXYZ(xyz);
         XYZToRGB(xyz, rgb);
     }
+
     RGBSpectrum ToRGBSpectrum() const;
+
     static SampledSpectrum FromRGB(
         const Float rgb[3], SpectrumType type = SpectrumType::Illuminant);
     static SampledSpectrum FromXYZ(
@@ -437,6 +447,7 @@ class RGBSpectrum : public CoefficientSpectrum<3> {
                 SpectrumType type = SpectrumType::Reflectance) {
         *this = s;
     }
+
     static RGBSpectrum FromRGB(const Float rgb[3],
                                SpectrumType type = SpectrumType::Reflectance) {
         RGBSpectrum s;
@@ -446,11 +457,13 @@ class RGBSpectrum : public CoefficientSpectrum<3> {
         DCHECK(!s.HasNaNs());
         return s;
     }
+
     void ToRGB(Float *rgb) const {
         rgb[0] = c[0];
         rgb[1] = c[1];
         rgb[2] = c[2];
     }
+
     const RGBSpectrum &ToRGBSpectrum() const { return *this; }
     void ToXYZ(Float xyz[3]) const { RGBToXYZ(c, xyz); }
     static RGBSpectrum FromXYZ(const Float xyz[3],
