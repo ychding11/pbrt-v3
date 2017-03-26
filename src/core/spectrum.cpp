@@ -89,16 +89,19 @@ Float AverageSpectrumSamples(const Float *lambda, const Float *vals, int n,
     return sum / (lambdaEnd - lambdaStart);
 }
 
-RGBSpectrum SampledSpectrum::ToRGBSpectrum() const {
+RGBSpectrum SampledSpectrum::ToRGBSpectrum() const
+{
     Float rgb[3];
     ToRGB(rgb);
     return RGBSpectrum::FromRGB(rgb);
 }
 
 SampledSpectrum SampledSpectrum::FromRGB(const Float rgb[3],
-                                         SpectrumType type) {
+                                         SpectrumType type)
+{
     SampledSpectrum r;
-    if (type == SpectrumType::Reflectance) {
+    if (type == SpectrumType::Reflectance)
+    {
         // Convert reflectance spectrum to RGB
         if (rgb[0] <= rgb[1] && rgb[0] <= rgb[2]) {
             // Compute reflectance _SampledSpectrum_ with _rgb[0]_ as minimum
@@ -132,7 +135,9 @@ SampledSpectrum SampledSpectrum::FromRGB(const Float rgb[3],
             }
         }
         r *= .94;
-    } else {
+    }
+    else
+    {
         // Convert illuminant spectrum to RGB
         if (rgb[0] <= rgb[1] && rgb[0] <= rgb[2]) {
             // Compute illuminant _SampledSpectrum_ with _rgb[0]_ as minimum
@@ -170,14 +175,18 @@ SampledSpectrum SampledSpectrum::FromRGB(const Float rgb[3],
     return r.Clamp();
 }
 
-SampledSpectrum::SampledSpectrum(const RGBSpectrum &r, SpectrumType t) {
+// Constructor
+SampledSpectrum::SampledSpectrum(const RGBSpectrum &r, SpectrumType t)
+{
     Float rgb[3];
     r.ToRGB(rgb);
     *this = SampledSpectrum::FromRGB(rgb, t);
 }
 
+// Utility function
 Float InterpolateSpectrumSamples(const Float *lambda, const Float *vals, int n,
-                                 Float l) {
+                                 Float l)
+{
     for (int i = 0; i < n - 1; ++i) CHECK_GT(lambda[i + 1], lambda[i]);
     if (l <= lambda[0]) return vals[0];
     if (l >= lambda[n - 1]) return vals[n - 1];
@@ -936,6 +945,8 @@ const Float CIE_lambda[nCIESamples] = {
     795, 796, 797, 798, 799, 800, 801, 802, 803, 804, 805, 806, 807, 808, 809,
     810, 811, 812, 813, 814, 815, 816, 817, 818, 819, 820, 821, 822, 823, 824,
     825, 826, 827, 828, 829, 830};
+
+// Utility function
 void Blackbody(const Float *lambda, int n, Float T, Float *Le) {
     if (T <= 0) {
         for (int i = 0; i < n; ++i) Le[i] = 0.f;
@@ -981,6 +992,7 @@ SampledSpectrum SampledSpectrum::rgbIllum2SpectYellow;
 SampledSpectrum SampledSpectrum::rgbIllum2SpectRed;
 SampledSpectrum SampledSpectrum::rgbIllum2SpectGreen;
 SampledSpectrum SampledSpectrum::rgbIllum2SpectBlue;
+
 const Float RGB2SpectLambda[nRGB2SpectSamples] = {
     380.000000, 390.967743, 401.935486, 412.903229, 423.870972, 434.838715,
     445.806458, 456.774200, 467.741943, 478.709686, 489.677429, 500.645172,

@@ -106,6 +106,7 @@ class CoefficientSpectrum {
         for (int i = 0; i < nSpectrumSamples; ++i) c[i] = v;
         DCHECK(!HasNaNs());
     }
+
 #ifdef DEBUG
     CoefficientSpectrum(const CoefficientSpectrum &s) {
         DCHECK(!s.HasNaNs());
@@ -118,8 +119,8 @@ class CoefficientSpectrum {
         return *this;
     }
 #endif  // DEBUG
-    void Print(FILE *f) const
-    {
+
+    void Print(FILE *f) const {
         fprintf(f, "[ ");
         for (int i = 0; i < nSpectrumSamples; ++i) {
             fprintf(f, "%f", c[i]);
