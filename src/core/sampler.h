@@ -66,7 +66,7 @@ class Sampler {
     virtual bool SetSampleNumber(int64_t sampleNum);
 
     std::string StateString() const
-	{
+    {
       return StringPrintf("(%d,%d), sample %" PRId64, currentPixel.x,
                           currentPixel.y, currentPixelSampleIndex);
     }
