@@ -1,0 +1,21 @@
+
+Film "image" "integer xresolution" 64 "integer yresolution" 64 "string filename" "sphere-no-dof-random-32.png"
+
+Sampler "random" "integer pixelsamples" 32
+
+Camera "perspective" "float fov" 35 "float lensradius" 0
+
+Integrator "directlighting"
+
+WorldBegin
+
+LightSource "infinite" "color L" [.8 .8 .8] "integer nsamples" [32]
+LightSource "distant" "point from" [-1 1 -1]
+
+Translate 0 0 4
+
+Material "uber" "color Kd" [.8 .05 .6] "float roughness" .01 "color Ks" [1 1 1]
+
+Shape "sphere"
+
+WorldEnd
