@@ -1,0 +1,51 @@
+Integrator "path" "integer maxdepth" [ 65 ] 
+
+Sampler "sobol" "integer pixelsamples" [ 64 ] 
+PixelFilter "triangle" "float xwidth" [ 1.000000 ] "float ywidth" [ 1.000000 ] 
+Film "image" "integer xresolution" [ 640 ] "integer yresolution" [ 360 ] "string filename" [ "teapot.png" ] 
+
+
+Transform [ 0.00552692 -0.342144 -0.939631 -0 -0 0.939646 -0.342149 -0 -0.999985 -0.0018952 -0.00517328 -0 -0.0919892 -2.36787 26.2919 1]
+
+Camera "perspective" "float fov" [ 20.114292 ] 
+		#"float focaldistance" [.75] 
+		#"float lensradius" [.02] 
+
+
+WorldBegin
+
+	Texture "Texture01" "spectrum" "checkerboard" "float uscale" [ 20.000000 ] "float vscale" [ 20.000000 ] 
+		"rgb tex1" [ 0.325000 0.310000 0.250000 ] 
+		"rgb tex2" [ 0.725000 0.710000 0.680000 ] 
+	MakeNamedMaterial "Material" "string type" [ "substrate" ] "rgb Ks" [ 0.040000 0.040000 0.040000 ] 
+		"bool remaproughness" [ "false" ] 
+		"float uroughness" [ 0.001000 ] 
+		"float vroughness" [ 0.001000 ] 
+		"rgb Kd" [ 0.900000 0.900000 0.900000 ] 
+	MakeNamedMaterial "Floor" "string type" [ "matte" ] "texture Kd" [ "Texture01" ] 
+	
+	NamedMaterial "Floor" 
+	Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] 
+		"point P" [ 0 -9.88498e-006 79.9533 -79.9533 0 0 0 9.88498e-006 -79.9533 79.9533 0 0 ] 
+		"normal N" [ 0 -1 -1.23634e-007 0 -1 -1.23634e-007 0 -1 -1.23634e-007 0 -1 -1.23634e-007 ] 
+		"float uv" [ 0 0 1 0 1 1 0 1 ] 
+		
+	TransformBegin
+		Transform [ -0.386527 0 0.922278 0 -0.922278 0 -0.386527 0 0 1 0 0 0 0 0 1]
+		LightSource "infinite" "string mapname" [ "textures/envmap.pfm" ] 
+	TransformEnd
+	
+	 
+	ObjectBegin "teapot"
+		NamedMaterial "Material"
+		Translate -1.5 0 0
+		Scale .75 .75 .75
+		Shape "plymesh" "string filename" [ "models/Mesh001.ply" ] #teapot
+		Shape "plymesh" "string filename" [ "models/Mesh000.ply" ] 
+	ObjectEnd
+	
+	Translate 0 0 4 
+	ObjectInstance "teapot"
+	Translate 0 0 -8 
+	ObjectInstance "teapot"
+WorldEnd
