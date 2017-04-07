@@ -1,0 +1,57 @@
+Integrator "path" "integer maxdepth" [ 65 ] 
+
+Sampler "sobol" "integer pixelsamples" [ 512 ] 
+PixelFilter "triangle" "float xwidth" [ 1.500000 ] "float ywidth" [ 1.500000 ] 
+Film "image" "integer xresolution" [ 640 ] "integer yresolution" [ 360 ] "string filename" [ "teapot-gold.png" ] 
+
+
+Transform [ 0.00552692 -0.342144 -0.939631 -0 -0 0.939646 -0.342149 -0 -0.999985 -0.0018952 -0.00517328 -0 -0.0919892 -2.36787 26.2919 1]
+
+Camera "perspective" "float fov" [ 20.114292 ] 
+		#"float focaldistance" [.75] 
+		#"float lensradius" [.02] 
+
+
+WorldBegin
+
+	AttributeBegin
+		Texture "Texture01" "spectrum" "checkerboard"  		# name, type, class
+				"float uscale" [ 20.000000 ] 
+				"float vscale" [ 20.000000 ] 
+				"rgb tex1" [ 0.325000 0.310000 0.250000 ] 	# texture used for even checks
+				"rgb tex2" [ 0.725000 0.710000 0.680000 ]   # texture used for odd checks
+		Material "matte"  "texture Kd" ["Texture01"] 	# diffuse reflectivity of the surface defined by a texture.
+		Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] 
+			"point P" [ 0 -9.88498e-006 79.9533 -79.9533 0 0 0 9.88498e-006 -79.9533 79.9533 0 0 ] 
+			"normal N" [ 0 -1 -1.23634e-007 0 -1 -1.23634e-007 0 -1 -1.23634e-007 0 -1 -1.23634e-007 ] 
+			"float uv" [ 0 0 1 0 1 1 0 1 ] 
+	AttributeEnd
+	
+	TransformBegin
+		Transform [ -0.386527 0 0.922278 0 -0.922278 0 -0.386527 0 0 1 0 0 0 0 0 1]
+		LightSource "infinite" "string mapname" [ "textures/envmap.pfm" ] 
+	TransformEnd	
+	
+	AttributeBegin
+		Material "substrate"  "rgb Ks" [0.040000 0.040000 0.040000] # coefficient of specular reflection
+				 "rgb Kd" [ 0.900000 0.900000 0.900000 ] 			# coefficient of diffuse reflection
+				 "bool remaproughness" [ "false" ] 
+				 "float uroughness" [ 0.001000 ] 
+				 "float vroughness" [ 0.001000 ] 			 
+		Translate 0 0 4 
+		Scale .75 .75 .75
+		Shape "plymesh" "string filename" [ "models/Mesh001.ply" ] #teapot
+		Shape "plymesh" "string filename" [ "models/Mesh000.ply" ] 
+	AttributeEnd
+
+	AttributeBegin
+		Material  "metal"  "float roughness" [.002] # more smaller more closer to perfect specular.
+				  "spectrum eta" "spds/Au.eta.spd"  # index of refraction
+				  "spectrum k" "spds/Au.k.spd"		# absorption coefficient 
+		Translate 0 0 -4 	
+		Scale .75 .75 .75
+		Shape "plymesh" "string filename" [ "models/Mesh001.ply" ] #teapot
+		Shape "plymesh" "string filename" [ "models/Mesh000.ply" ] 
+	AttributeEnd
+
+WorldEnd
