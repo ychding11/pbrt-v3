@@ -1,11 +1,11 @@
 
-Film "image" "integer xresolution" 64 "integer yresolution" 64 "string filename" "sphere-random-4.png"
+Film "image" "integer xresolution" 64 "integer yresolution" 64 "string filename" "sphere-sobol-256.png"
 
-Sampler "random" "integer pixelsamples" 4
+Sampler "sobol" "integer pixelsamples" 256
 
-Camera  "perspective" "float fov" [35]
-		"float focaldistance" 1 
-		"float lensradius" .1
+Camera "perspective" "float fov" 35 
+	   "float focaldistance" 1 
+	   "float lensradius" .1
 
 Integrator "directlighting"
 
