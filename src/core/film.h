@@ -62,6 +62,7 @@ class Film {
          std::unique_ptr<Filter> filter, Float diagonal,
          const std::string &filename, Float scale,
          Float maxSampleLuminance = Infinity);
+
     Bounds2i GetSampleBounds() const;
     Bounds2f GetPhysicalExtent() const;
     std::unique_ptr<FilmTile> GetFilmTile(const Bounds2i &sampleBounds);
@@ -80,13 +81,16 @@ class Film {
 
   private:
     // Film Private Data
-    struct Pixel {
+	// Internal Data Type 
+    struct Pixel
+	{
         Pixel() { xyz[0] = xyz[1] = xyz[2] = filterWeightSum = 0; }
         Float xyz[3];
         Float filterWeightSum;
         AtomicFloat splatXYZ[3];
         Float pad;
     };
+
     std::unique_ptr<Pixel[]> pixels;
     static PBRT_CONSTEXPR int filterTableWidth = 16;
     Float filterTable[filterTableWidth * filterTableWidth];
@@ -95,7 +99,8 @@ class Film {
     const Float maxSampleLuminance;
 
     // Film Private Methods
-    Pixel &GetPixel(const Point2i &p) {
+    Pixel &GetPixel(const Point2i &p)
+	{
         CHECK(InsideExclusive(p, croppedPixelBounds));
         int width = croppedPixelBounds.pMax.x - croppedPixelBounds.pMin.x;
         int offset = (p.x - croppedPixelBounds.pMin.x) +
