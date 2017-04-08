@@ -1,0 +1,31 @@
+
+Film "image" "integer xresolution" [400] "integer yresolution" [400] "string filename" "caustic-proj.png"
+
+Integrator  "sppm" "integer numiterations" 256
+			"float radius" .25
+			"integer maxdepth" 10
+
+#Integrator "mlt" "integer mutationsperpixel" 200 "integer maxdepth" 10
+
+LookAt 0 -4 5    0 0 -1   0 0 1
+Camera "perspective" "float fov" [40 ]
+
+WorldBegin
+
+	AttributeBegin
+		LightSource "infinite" "string mapname" ["textures/grace-new_latlong.exr"]
+	AttributeEnd
+
+	AttributeBegin
+		Material "matte" 
+				 "rgb Kd" [ .6 .6 .6 ]
+		Shape   "trianglemesh" "integer indices" [0 2 1 0 3 2 ]
+				"point P" [-20 -20 -2   20 -20 -2   20 20 -2   -20 20 -2 ]
+	AttributeEnd
+
+	Material "glass" "float eta" [1.5 ] # The index of refraction of the inside of the object.
+			  "spectrum Kr" [.1 .1 1]
+			  #"spectrum Kt" [1]
+	Shape "sphere" "float radius" 1.5  
+
+WorldEnd
