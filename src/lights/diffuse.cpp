@@ -49,7 +49,8 @@ DiffuseAreaLight::DiffuseAreaLight(const Transform &LightToWorld,
       Lemit(Lemit),
       shape(shape),
       twoSided(twoSided),
-      area(shape->Area()) {
+      area(shape->Area())
+{
     // Warn if light has transformation with non-uniform scale, though not
     // for Triangles, since this doesn't matter for them.
     if (WorldToLight.HasScale() &&
@@ -61,13 +62,15 @@ DiffuseAreaLight::DiffuseAreaLight(const Transform &LightToWorld,
             "Proceed at your own risk; your image may have errors.");
 }
 
-Spectrum DiffuseAreaLight::Power() const {
+Spectrum DiffuseAreaLight::Power() const
+{
     return (twoSided ? 2 : 1) * Lemit * area * Pi;
 }
 
 Spectrum DiffuseAreaLight::Sample_Li(const Interaction &ref, const Point2f &u,
                                      Vector3f *wi, Float *pdf,
-                                     VisibilityTester *vis) const {
+                                     VisibilityTester *vis) const
+{
     ProfilePhase _(Prof::LightSample);
     Interaction pShape = shape->Sample(ref, u, pdf);
     pShape.mediumInterface = mediumInterface;

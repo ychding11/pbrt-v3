@@ -143,7 +143,9 @@ static Vector3f BeckmannSample(const Vector3f &wi, Float alpha_x, Float alpha_y,
 // MicrofacetDistribution Method Definitions
 MicrofacetDistribution::~MicrofacetDistribution() {}
 
-Float BeckmannDistribution::D(const Vector3f &wh) const {
+// The distribution formula is on page[546] 8.11
+Float BeckmannDistribution::D(const Vector3f &wh) const
+{
     Float tan2Theta = Tan2Theta(wh);
     if (std::isinf(tan2Theta)) return 0.;
     Float cos4Theta = Cos2Theta(wh) * Cos2Theta(wh);
@@ -152,7 +154,9 @@ Float BeckmannDistribution::D(const Vector3f &wh) const {
            (Pi * alphax * alphay * cos4Theta);
 }
 
-Float TrowbridgeReitzDistribution::D(const Vector3f &wh) const {
+// The distribution formula is on page[546] 8.12
+Float TrowbridgeReitzDistribution::D(const Vector3f &wh) const
+{
     Float tan2Theta = Tan2Theta(wh);
     if (std::isinf(tan2Theta)) return 0.;
     const Float cos4Theta = Cos2Theta(wh) * Cos2Theta(wh);
@@ -183,12 +187,14 @@ Float TrowbridgeReitzDistribution::Lambda(const Vector3f &w) const {
     return (-1 + std::sqrt(1.f + alpha2Tan2Theta)) / 2;
 }
 
-std::string BeckmannDistribution::ToString() const {
+std::string BeckmannDistribution::ToString() const
+{
     return StringPrintf("[ BeckmannDistribution alphax: %f alphay: %f ]",
                         alphax, alphay);
 }
 
-std::string TrowbridgeReitzDistribution::ToString() const {
+std::string TrowbridgeReitzDistribution::ToString() const
+{
     return StringPrintf("[ TrowbridgeReitzDistribution alphax: %f alphay: %f ]",
                         alphax, alphay);
 }
@@ -336,7 +342,8 @@ Vector3f TrowbridgeReitzDistribution::Sample_wh(const Vector3f &wo,
 }
 
 Float MicrofacetDistribution::Pdf(const Vector3f &wo,
-                                  const Vector3f &wh) const {
+                                  const Vector3f &wh) const
+{
     if (sampleVisibleArea)
         return D(wh) * G1(wo) * AbsDot(wo, wh) / AbsCosTheta(wo);
     else

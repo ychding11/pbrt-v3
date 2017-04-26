@@ -45,7 +45,8 @@ namespace pbrt {
 void MatteMaterial::ComputeScatteringFunctions(SurfaceInteraction *si,
                                                MemoryArena &arena,
                                                TransportMode mode,
-                                               bool allowMultipleLobes) const {
+                                               bool allowMultipleLobes) const
+{
     // Perform bump mapping with _bumpMap_, if present
     if (bumpMap) Bump(bumpMap, si);
 
@@ -53,7 +54,8 @@ void MatteMaterial::ComputeScatteringFunctions(SurfaceInteraction *si,
     si->bsdf = ARENA_ALLOC(arena, BSDF)(*si);
     Spectrum r = Kd->Evaluate(*si).Clamp();
     Float sig = Clamp(sigma->Evaluate(*si), 0, 90);
-    if (!r.IsBlack()) {
+    if (!r.IsBlack())
+	{
         if (sig == 0)
             si->bsdf->Add(ARENA_ALLOC(arena, LambertianReflection)(r));
         else
@@ -61,7 +63,8 @@ void MatteMaterial::ComputeScatteringFunctions(SurfaceInteraction *si,
     }
 }
 
-MatteMaterial *CreateMatteMaterial(const TextureParams &mp) {
+MatteMaterial *CreateMatteMaterial(const TextureParams &mp)
+{
     std::shared_ptr<Texture<Spectrum>> Kd =
         mp.GetSpectrumTexture("Kd", Spectrum(0.5f));
     std::shared_ptr<Texture<Float>> sigma = mp.GetFloatTexture("sigma", 0.f);

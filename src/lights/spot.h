@@ -46,7 +46,9 @@
 namespace pbrt {
 
 // SpotLight Declarations
-class SpotLight : public Light {
+// The class models a light source emitting light in a cone of directions from their position.
+class SpotLight : public Light
+{
   public:
     // SpotLight Public Methods
     SpotLight(const Transform &LightToWorld, const MediumInterface &m,
@@ -66,7 +68,7 @@ class SpotLight : public Light {
     // SpotLight Private Data
     const Point3f pLight;
     const Spectrum I;
-    const Float cosTotalWidth, cosFalloffStart;
+    const Float cosTotalWidth, cosFalloffStart; // See page 722 for details.
 };
 
 std::shared_ptr<SpotLight> CreateSpotLight(const Transform &l2w,

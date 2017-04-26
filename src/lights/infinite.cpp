@@ -44,17 +44,20 @@ InfiniteAreaLight::InfiniteAreaLight(const Transform &LightToWorld,
                                      const Spectrum &L, int nSamples,
                                      const std::string &texmap)
     : Light((int)LightFlags::Infinite, LightToWorld, MediumInterface(),
-            nSamples) {
+            nSamples)
+{
     // Read texel data from _texmap_ and initialize _Lmap_
     Point2i resolution;
     std::unique_ptr<RGBSpectrum[]> texels(nullptr);
-    if (texmap != "") {
+    if (texmap != "")
+	{
         texels = ReadImage(texmap, &resolution);
         if (texels)
             for (int i = 0; i < resolution.x * resolution.y; ++i)
                 texels[i] *= L.ToRGBSpectrum();
     }
-    if (!texels) {
+    if (!texels)
+	{
         resolution.x = resolution.y = 1;
         texels = std::unique_ptr<RGBSpectrum[]>(new RGBSpectrum[1]);
         texels[0] = L.ToRGBSpectrum();

@@ -46,7 +46,9 @@
 namespace pbrt {
 
 // PointLight Declarations
-class PointLight : public Light {
+// The class models an isotropic point light source that emits the same amount of light in all directions.
+class PointLight : public Light
+{
   public:
     // PointLight Public Methods
     PointLight(const Transform &LightToWorld,
@@ -54,9 +56,10 @@ class PointLight : public Light {
         : Light((int)LightFlags::DeltaPosition, LightToWorld, mediumInterface),
           pLight(LightToWorld(Point3f(0, 0, 0))),
           I(I) {}
+
     Spectrum Sample_Li(const Interaction &ref, const Point2f &u, Vector3f *wi,
-                       Float *pdf, VisibilityTester *vis) const;
-    Spectrum Power() const;
+                       Float *pdf, VisibilityTester *vis) const override;
+    Spectrum Power() const override;
     Float Pdf_Li(const Interaction &, const Vector3f &) const;
     Spectrum Sample_Le(const Point2f &u1, const Point2f &u2, Float time,
                        Ray *ray, Normal3f *nLight, Float *pdfPos,
@@ -67,7 +70,7 @@ class PointLight : public Light {
   private:
     // PointLight Private Data
     const Point3f pLight;
-    const Spectrum I;
+    const Spectrum I; // amount of power per unit solid angle.
 };
 
 std::shared_ptr<PointLight> CreatePointLight(const Transform &light2world,

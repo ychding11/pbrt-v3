@@ -47,7 +47,9 @@
 namespace pbrt {
 
 // ProjectionLight Declarations
-class ProjectionLight : public Light {
+// The class takes an image map and projects its image out into the scene.
+class ProjectionLight : public Light
+{
   public:
     // ProjectionLight Public Methods
     ProjectionLight(const Transform &LightToWorld,

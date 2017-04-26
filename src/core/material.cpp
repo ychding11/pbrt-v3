@@ -44,7 +44,8 @@ namespace pbrt {
 Material::~Material() {}
 
 void Material::Bump(const std::shared_ptr<Texture<Float>> &d,
-                    SurfaceInteraction *si) {
+                    SurfaceInteraction *si)
+{
     // Compute offset positions and evaluate displacement texture
     SurfaceInteraction siEval = *si;
 

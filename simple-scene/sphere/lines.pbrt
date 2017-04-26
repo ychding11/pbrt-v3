@@ -1,0 +1,30 @@
+Film "image" "integer xresolution" [400] "integer yresolution" [400] "string filename" "lines-sobol-256.png"
+
+Sampler "sobol" "integer pixelsamples" [128]
+
+#LookAt 2.3 .1 -.7    .4 0 -.9  0 1 0
+Rotate -3 1 0 0
+Rotate 52 0 1 0
+Translate -2.3 -.05 .5
+Camera "perspective" "float fov" [30]
+		#"float focaldistance" [.75] 
+		#"float lensradius" [.0002] 
+		#"float lensradius" [.0075] 
+		#"float lensradius" [.002] 
+
+WorldBegin
+
+	AreaLightSource "area" "color L" [4 4 4] "integer nsamples" [128]
+	LightSource "infinite" "rgb L" [ .9 .8 1 ]
+
+	Texture "grid" "color" "imagemap" # name type class
+			"string filename" ["textures/lines.png"]
+	Texture "sgrid" "color" "scale"   # name type class
+			"texture tex1" "grid" "color tex2" [ .5 .5 .5 ]
+	Material "matte" "texture Kd" "sgrid"
+
+	Shape "trianglemesh" "point P" [ -4 0 -4 4 0 -4 4 0 4 -4 0 4 ]
+		  "float uv" [ 0 0 5 0 5 5 0 5 ]
+		  "integer indices" [ 0 1 2 2 3 0]
+
+WorldEnd

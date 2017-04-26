@@ -49,6 +49,7 @@
 namespace pbrt {
 
 // InfiniteAreaLight Declarations
+// See Page 737
 class InfiniteAreaLight : public Light {
   public:
     // InfiniteAreaLight Public Methods
@@ -70,7 +71,7 @@ class InfiniteAreaLight : public Light {
 
   private:
     // InfiniteAreaLight Private Data
-    std::unique_ptr<MIPMap<RGBSpectrum>> Lmap;
+    std::unique_ptr<MIPMap<RGBSpectrum>> Lmap; // store loaded image data
     Point3f worldCenter;
     Float worldRadius;
     std::unique_ptr<Distribution2D> distribution;

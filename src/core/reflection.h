@@ -150,7 +150,10 @@ struct FourierBSDFTable {
                              Float weights[4]) const;
 };
 
-class BSDF {
+// The BSDF class represents a collection of BRDFs and BTDFs.
+// See details on page 576.
+class BSDF
+{
   public:
     // BSDF Public Methods
     BSDF(const SurfaceInteraction &si, Float eta = 1)
@@ -159,15 +162,19 @@ class BSDF {
           ng(si.n),
           ss(Normalize(si.shading.dpdu)),
           ts(Cross(ns, ss)) {}
-    void Add(BxDF *b) {
+
+    void Add(BxDF *b)
+	{
         CHECK_LT(nBxDFs, MaxBxDFs);
         bxdfs[nBxDFs++] = b;
     }
     int NumComponents(BxDFType flags = BSDF_ALL) const;
-    Vector3f WorldToLocal(const Vector3f &v) const {
+    Vector3f WorldToLocal(const Vector3f &v) const
+	{
         return Vector3f(Dot(v, ss), Dot(v, ts), Dot(v, ns));
     }
-    Vector3f LocalToWorld(const Vector3f &v) const {
+    Vector3f LocalToWorld(const Vector3f &v) const
+	{
         return Vector3f(ss.x * v.x + ts.x * v.y + ns.x * v.z,
                         ss.y * v.x + ts.y * v.y + ns.y * v.z,
                         ss.z * v.x + ts.z * v.y + ns.z * v.z);
@@ -201,14 +208,16 @@ class BSDF {
     friend class MixMaterial;
 };
 
-inline std::ostream &operator<<(std::ostream &os, const BSDF &bsdf) {
+inline std::ostream &operator<<(std::ostream &os, const BSDF &bsdf)
+{
     os << bsdf.ToString();
     return os;
 }
 
 // BxDF Declarations
 // This virtual class is a Base class.
-class BxDF {
+class BxDF
+{
   public:
     // BxDF Interface
     virtual ~BxDF() {}
@@ -232,7 +241,8 @@ class BxDF {
     const BxDFType type;
 };
 
-inline std::ostream &operator<<(std::ostream &os, const BxDF &bxdf) {
+inline std::ostream &operator<<(std::ostream &os, const BxDF &bxdf)
+{
     os << bxdf.ToString();
     return os;
 }
@@ -314,7 +324,8 @@ class FresnelNoOp : public Fresnel
     std::string ToString() const { return "[ FresnelNoOp ]"; }
 };
 
-class SpecularReflection : public BxDF {
+class SpecularReflection : public BxDF
+{
   public:
     // SpecularReflection Public Methods
     SpecularReflection(const Spectrum &R, Fresnel *fresnel)
@@ -322,7 +333,8 @@ class SpecularReflection : public BxDF {
           R(R),
           fresnel(fresnel) {}
 
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override {
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override
+	{
         return Spectrum(0.f);
     }
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &sample,
@@ -348,7 +360,8 @@ class SpecularTransmission : public BxDF {
           fresnel(etaA, etaB),
           mode(mode) {}
 
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override {
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override
+	{
         return Spectrum(0.f);
     }
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &sample,
@@ -364,6 +377,8 @@ class SpecularTransmission : public BxDF {
     const TransportMode mode;
 };
 
+// This class represents both specular reflection and specular transmission together.
+// Only focus on the dielectric case.
 class FresnelSpecular : public BxDF {
   public:
     // FresnelSpecular Public Methods
@@ -377,7 +392,8 @@ class FresnelSpecular : public BxDF {
           fresnel(etaA, etaB),
           mode(mode) {}
 
-    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override {
+    Spectrum f(const Vector3f &wo, const Vector3f &wi) const override
+	{
         return Spectrum(0.f);
     }
     Spectrum Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u,
@@ -393,7 +409,10 @@ class FresnelSpecular : public BxDF {
     const TransportMode mode;
 };
 
-class LambertianReflection : public BxDF {
+// This class models a perfect diffuse surface
+// that scatters incident illumination equally in all directions
+class LambertianReflection : public BxDF
+{
   public:
     // LambertianReflection Public Methods
     LambertianReflection(const Spectrum &R)
@@ -409,7 +428,9 @@ class LambertianReflection : public BxDF {
     const Spectrum R;
 };
 
-class LambertianTransmission : public BxDF {
+// This models perfect Lambertian transmission
+class LambertianTransmission : public BxDF
+{
   public:
     // LambertianTransmission Public Methods
     LambertianTransmission(const Spectrum &T)
@@ -428,11 +449,17 @@ class LambertianTransmission : public BxDF {
     Spectrum T;
 };
 
+// Rough surfaces generally appear brighter as the illumination
+// direction approaches the viewing direction. This class models 
+// a reflection model that describes rough surfaces by V-shaped
+// microfacets described by a spherical Gaussian distribution.
+// see page [542] formula.
 class OrenNayar : public BxDF {
   public:
     // OrenNayar Public Methods
     OrenNayar(const Spectrum &R, Float sigma)
-        : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)), R(R) {
+        : BxDF(BxDFType(BSDF_REFLECTION | BSDF_DIFFUSE)), R(R)
+	{
         sigma = Radians(sigma);
         Float sigma2 = sigma * sigma;
         A = 1.f - (sigma2 / (2.f * (sigma2 + 0.33f)));
@@ -447,7 +474,11 @@ class OrenNayar : public BxDF {
     Float A, B;
 };
 
-class MicrofacetReflection : public BxDF {
+// The class modeled surfaces as collections of perfectly smooth mirrored microfacets
+// It uses Torrance–Sparrow model.
+// See page 552
+class MicrofacetReflection : public BxDF
+{
   public:
     // MicrofacetReflection Public Methods
     MicrofacetReflection(const Spectrum &R,
@@ -470,7 +501,10 @@ class MicrofacetReflection : public BxDF {
     const Fresnel *fresnel;
 };
 
-class MicrofacetTransmission : public BxDF {
+// It uses Torrance–Sparrow model.
+// See page 552
+class MicrofacetTransmission : public BxDF
+{
   public:
     // MicrofacetTransmission Public Methods
     MicrofacetTransmission(const Spectrum &T,
@@ -499,7 +533,11 @@ class MicrofacetTransmission : public BxDF {
     const TransportMode mode;
 };
 
-class FresnelBlend : public BxDF {
+// The class implements BRDF model developed by Ashikhmin and Shirley(2000, 2002) that models a diffuse 
+// underlying surface with a glossy specular surface above it.
+// BSDF formular on page 558.
+class FresnelBlend : public BxDF
+{
   public:
     // FresnelBlend Public Methods
     FresnelBlend(const Spectrum &Rd, const Spectrum &Rs,
@@ -521,7 +559,14 @@ class FresnelBlend : public BxDF {
     MicrofacetDistribution *distribution;
 };
 
-class FourierBSDF : public BxDF {
+// Layered materials like metals with smooth or rough coatings or fabrics,
+// which are often partially retro-reflective. Reflection models like
+// Torrance–Sparrow and Oren–Nayar cannot accurately represent.
+// FourierBSDF represents BSDFs with sums of scaled cosine terms using the
+// Fourier basis.This representation is accurate, space-efficient, and works
+// well withMonte Carlo integration
+class FourierBSDF : public BxDF
+{
   public:
     // FourierBSDF Public Methods
     Spectrum f(const Vector3f &wo, const Vector3f &wi) const;

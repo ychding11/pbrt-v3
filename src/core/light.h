@@ -59,16 +59,29 @@ inline bool IsDeltaLight(int flags) {
 }
 
 // Light Declarations
+// See details on page 714
 class Light {
   public:
     // Light Interface
     virtual ~Light();
+
+	// flags parameter indicates the fundamental light source type
+	// nSamples parameter is used for area light sources to calculate soft shadow.
     Light(int flags, const Transform &LightToWorld,
           const MediumInterface &mediumInterface, int nSamples = 1);
+
+	// Returns incident radiance from the light at a point p
+	// and set the direction vector w that gives the direction from which radiance is arriving.
+	// VisibilityTester holds information about the shadow ray traced to verify that there are no occluding objects
+	// between the light and the reference point.
+	// u is sample on the light source’s surface
+	// pdf is sample u's pdf.
     virtual Spectrum Sample_Li(const Interaction &ref, const Point2f &u,
                                Vector3f *wi, Float *pdf,
                                VisibilityTester *vis) const = 0;
+	// Return light total emitted power
     virtual Spectrum Power() const = 0;
+	// Invoked prior to rendering, for example record a bound of the scene extent.
     virtual void Preprocess(const Scene &scene) {}
     virtual Spectrum Le(const RayDifferential &r) const;
     virtual Float Pdf_Li(const Interaction &ref, const Vector3f &wi) const = 0;
@@ -88,6 +101,7 @@ class Light {
     const Transform LightToWorld, WorldToLight;
 };
 
+// See page 717
 class VisibilityTester {
   public:
     VisibilityTester() {}
@@ -96,18 +110,24 @@ class VisibilityTester {
         : p0(p0), p1(p1) {}
     const Interaction &P0() const { return p0; }
     const Interaction &P1() const { return p1; }
+
     bool Unoccluded(const Scene &scene) const;
+
+	// It computes the beam transmittance, the fraction of radiance transmitted along the segment between the two points.
+	// It accounts for both attenuation in participating media as well as any surfaces that block the ray completely.
     Spectrum Tr(const Scene &scene, Sampler &sampler) const;
 
   private:
     Interaction p0, p1;
 };
 
-class AreaLight : public Light {
+class AreaLight : public Light
+{
   public:
     // AreaLight Interface
     AreaLight(const Transform &LightToWorld, const MediumInterface &medium,
               int nSamples);
+	// Evaluate the area light’s emitted radiance, L, in the given outgoing direction.
     virtual Spectrum L(const Interaction &intr, const Vector3f &w) const = 0;
 };
 
