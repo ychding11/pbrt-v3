@@ -66,6 +66,7 @@ class MicrofacetDistribution
 	{
         return 1 / (1 + Lambda(wo) + Lambda(wi));
     }
+	// sample microfacet face normal, on page 804
     virtual Vector3f Sample_wh(const Vector3f &wo, const Point2f &u) const = 0;
     Float Pdf(const Vector3f &wo, const Vector3f &wh) const;
     virtual std::string ToString() const = 0;

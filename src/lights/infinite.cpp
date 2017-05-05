@@ -67,6 +67,7 @@ InfiniteAreaLight::InfiniteAreaLight(const Transform &LightToWorld,
     // Initialize sampling PDFs for infinite area light
 
     // Compute scalar-valued image _img_ from environment map
+	// See Page 845 for details.
     int width = 2 * Lmap->Width(), height = 2 * Lmap->Height();
     std::unique_ptr<Float[]> img(new Float[width * height]);
     float fwidth = 0.5f / std::min(width, height);
@@ -98,9 +99,11 @@ Spectrum InfiniteAreaLight::Le(const RayDifferential &ray) const {
     return Spectrum(Lmap->Lookup(st), SpectrumType::Illuminant);
 }
 
+// See Page 846 for details
 Spectrum InfiniteAreaLight::Sample_Li(const Interaction &ref, const Point2f &u,
                                       Vector3f *wi, Float *pdf,
-                                      VisibilityTester *vis) const {
+                                      VisibilityTester *vis) const
+{
     ProfilePhase _(Prof::LightSample);
     // Find $(u,v)$ sample coordinates in infinite light texture
     Float mapPdf;
@@ -111,10 +114,10 @@ Spectrum InfiniteAreaLight::Sample_Li(const Interaction &ref, const Point2f &u,
     Float theta = uv[1] * Pi, phi = uv[0] * 2 * Pi;
     Float cosTheta = std::cos(theta), sinTheta = std::sin(theta);
     Float sinPhi = std::sin(phi), cosPhi = std::cos(phi);
-    *wi =
-        LightToWorld(Vector3f(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta));
+    *wi = LightToWorld(Vector3f(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta));
 
     // Compute PDF for sampled infinite light direction
+	// See page 847 for details
     *pdf = mapPdf / (2 * Pi * Pi * sinTheta);
     if (sinTheta == 0) *pdf = 0;
 

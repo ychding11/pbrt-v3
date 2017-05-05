@@ -378,6 +378,7 @@ bool FourierBSDFTable::GetWeightsAndOffset(Float cosTheta, int *offset,
     return CatmullRomWeights(nMu, mu, cosTheta, offset, weights);
 }
 
+// See Page 803.
 Spectrum BxDF::Sample_f(const Vector3f &wo, Vector3f *wi, const Point2f &u,
                         Float *pdf, BxDFType *sampledType) const
 {

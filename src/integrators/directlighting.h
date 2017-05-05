@@ -49,7 +49,13 @@ namespace pbrt {
 enum class LightStrategy { UniformSampleAll, UniformSampleOne };
 
 // DirectLightingIntegrator Declarations
-class DirectLightingIntegrator : public SamplerIntegrator {
+// See Page 849 for details
+// DirectLightingIntegrator which, unsurprisingly, only accounts for only direct
+// lighting—light that has traveled directly from a light source to the point being shaded—
+// and ignores indirect illumination from objects that are not themselves emissive, except
+// for basic specular reflection and transmission effects.
+class DirectLightingIntegrator : public SamplerIntegrator
+{
   public:
     // DirectLightingIntegrator Public Methods
     DirectLightingIntegrator(LightStrategy strategy, int maxDepth,
