@@ -1,15 +1,12 @@
-
-LookAt 18 5.5 2    15.5 3.9 10   0 1 0
-Camera "perspective" "float fov" [45]
-
-Sampler "lowdiscrepancy" "integer pixelsamples" [16]
-PixelFilter "box"
-
-Film "image" "integer xresolution" [400] "integer yresolution" [400] "string filename" "teapot-metal.png"
+LookAt 0 .26 .45    0 .1 0   0 1 0
+Rotate 5 0 1 0 
+Camera "perspective" "float fov" [50]
+Film "image" "integer xresolution" [400] "integer yresolution" [400] "string filename" "metal-bunny.png"
 
 #Integrator "mlt" "integer mutationsperpixel" 1000
 Integrator "bdpt"
-
+Sampler "lowdiscrepancy" "integer pixelsamples" [16]
+PixelFilter "box"
 Sampler "sobol" "integer pixelsamples" 512
 
 
@@ -17,7 +14,7 @@ WorldBegin
 
 	#lights
 	AttributeBegin
-		#Rotate -90 1 0 0 
+		Rotate -90 1 0 0 
 		LightSource "infinite" "integer nsamples" [16] "color L" [1 1 1]
 				"string mapname" ["textures/uffizi_latlong.exr"]
 	AttributeEnd
@@ -48,9 +45,8 @@ WorldBegin
 				 "spectrum eta" "spds/Au.eta.spd"
 				 "spectrum k" "spds/Au.k.spd"
 
-		Translate 15 0 15
-		Scale 1.25 1.25 1.25
-		Include "geometry/room-teapot.pbrt"
+		Scale 1.5 1.5 1.5
+		Shape "plymesh" "string filename" "geometry/bunny.ply"
 	AttributeEnd
 
 WorldEnd
