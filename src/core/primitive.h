@@ -64,7 +64,11 @@ class Primitive {
 };
 
 // GeometricPrimitive Declarations
-class GeometricPrimitive : public Primitive {
+// The GeometricPrimitive class represents a single shape (e.g., a sphere) in the scene. One
+// GeometricPrimitive is allocated for each shape in the scene description provided by the user.
+// See Page 263 for details.
+class GeometricPrimitive : public Primitive
+{
   public:
     // GeometricPrimitive Public Methods
     virtual Bounds3f WorldBound() const;

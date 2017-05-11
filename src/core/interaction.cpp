@@ -98,19 +98,21 @@ void SurfaceInteraction::ComputeScatteringFunctions(const RayDifferential &ray,
                                           allowMultipleLobes);
 }
 
-void SurfaceInteraction::ComputeDifferentials(
-    const RayDifferential &ray) const {
-    if (ray.hasDifferentials) {
+// See Page 603 for details
+// This computing is for texture antialiasing
+void SurfaceInteraction::ComputeDifferentials( const RayDifferential &ray) const
+{
+    if (ray.hasDifferentials)
+	{
         // Estimate screen space change in $\pt{}$ and $(u,v)$
 
         // Compute auxiliary intersection points with plane
+		// computing formula see page 605.
         Float d = Dot(n, Vector3f(p.x, p.y, p.z));
-        Float tx =
-            -(Dot(n, Vector3f(ray.rxOrigin)) - d) / Dot(n, ray.rxDirection);
+        Float tx = -(Dot(n, Vector3f(ray.rxOrigin)) - d) / Dot(n, ray.rxDirection);
         if (std::isnan(tx)) goto fail;
         Point3f px = ray.rxOrigin + tx * ray.rxDirection;
-        Float ty =
-            -(Dot(n, Vector3f(ray.ryOrigin)) - d) / Dot(n, ray.ryDirection);
+        Float ty = -(Dot(n, Vector3f(ray.ryOrigin)) - d) / Dot(n, ray.ryDirection);
         if (std::isnan(ty)) goto fail;
         Point3f py = ray.ryOrigin + ty * ray.ryDirection;
         dpdx = px - p;
@@ -119,8 +121,10 @@ void SurfaceInteraction::ComputeDifferentials(
         // Compute $(u,v)$ offsets at auxiliary points
 
         // Choose two dimensions to use for ray offset computation
+		// Discards lagest magnitude component, see page 606 for detais.
         int dim[2];
         if (std::abs(n.x) > std::abs(n.y) && std::abs(n.x) > std::abs(n.z)) {
+			// Discards largest magnitude componet y.
             dim[0] = 1;
             dim[1] = 2;
         } else if (std::abs(n.y) > std::abs(n.z)) {
@@ -132,13 +136,16 @@ void SurfaceInteraction::ComputeDifferentials(
         }
 
         // Initialize _A_, _Bx_, and _By_ matrices for offset computation
+		// construct matrix based on chosen component.
         Float A[2][2] = {{dpdu[dim[0]], dpdv[dim[0]]},
                          {dpdu[dim[1]], dpdv[dim[1]]}};
         Float Bx[2] = {px[dim[0]] - p[dim[0]], px[dim[1]] - p[dim[1]]};
         Float By[2] = {py[dim[0]] - p[dim[0]], py[dim[1]] - p[dim[1]]};
         if (!SolveLinearSystem2x2(A, Bx, &dudx, &dvdx)) dudx = dvdx = 0;
         if (!SolveLinearSystem2x2(A, By, &dudy, &dvdy)) dudy = dvdy = 0;
-    } else {
+    }
+	else
+	{
     fail:
         dudx = dvdx = 0;
         dudy = dvdy = 0;

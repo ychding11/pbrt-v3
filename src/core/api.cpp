@@ -1151,17 +1151,20 @@ void pbrtAreaLightSource(const std::string &name, const ParamSet &params) {
     }
 }
 
-void pbrtShape(const std::string &name, const ParamSet &params) {
+void pbrtShape(const std::string &name, const ParamSet &params)
+{
     VERIFY_WORLD("Shape");
     std::vector<std::shared_ptr<Primitive>> prims;
     std::vector<std::shared_ptr<AreaLight>> areaLights;
-    if (PbrtOptions.cat || (PbrtOptions.toPly && name != "trianglemesh")) {
+    if (PbrtOptions.cat || (PbrtOptions.toPly && name != "trianglemesh"))
+	{
         printf("%*sShape \"%s\" ", catIndentCount, "", name.c_str());
         params.Print(catIndentCount);
         printf("\n");
     }
 
-    if (!curTransform.IsAnimated()) {
+    if (!curTransform.IsAnimated())
+	{
         // Initialize _prims_ and _areaLights_ for static shape
 
         // Create shapes for shape _name_
@@ -1174,18 +1177,21 @@ void pbrtShape(const std::string &name, const ParamSet &params) {
         std::shared_ptr<Material> mtl = graphicsState.CreateMaterial(params);
         params.ReportUnused();
         MediumInterface mi = graphicsState.CreateMediumInterface();
-        for (auto s : shapes) {
+        for (auto s : shapes)
+		{
             // Possibly create area light for shape
             std::shared_ptr<AreaLight> area;
-            if (graphicsState.areaLight != "") {
+            if (graphicsState.areaLight != "")
+			{
                 area = MakeAreaLight(graphicsState.areaLight, curTransform[0],
                                      mi, graphicsState.areaLightParams, s);
                 if (area) areaLights.push_back(area);
             }
-            prims.push_back(
-                std::make_shared<GeometricPrimitive>(s, mtl, area, mi));
+            prims.push_back( std::make_shared<GeometricPrimitive>(s, mtl, area, mi));
         }
-    } else {
+    }
+	else
+	{
         // Initialize _prims_ and _areaLights_ for animated shape
 
         // Create initial shape or shapes for animated shape
@@ -1218,7 +1224,8 @@ void pbrtShape(const std::string &name, const ParamSet &params) {
         AnimatedTransform animatedObjectToWorld(
             ObjToWorld[0], renderOptions->transformStartTime, ObjToWorld[1],
             renderOptions->transformEndTime);
-        if (prims.size() > 1) {
+        if (prims.size() > 1)
+		{
             std::shared_ptr<Primitive> bvh = std::make_shared<BVHAccel>(prims);
             prims.clear();
             prims.push_back(bvh);
@@ -1241,19 +1248,23 @@ void pbrtShape(const std::string &name, const ParamSet &params) {
     }
 }
 
-std::shared_ptr<Material> GraphicsState::CreateMaterial(
-    const ParamSet &params) {
+std::shared_ptr<Material> GraphicsState::CreateMaterial( const ParamSet &params)
+{
     TextureParams mp(params, materialParams, floatTextures, spectrumTextures);
     std::shared_ptr<Material> mtl;
-    if (currentNamedMaterial != "") {
+    if (currentNamedMaterial != "")
+	{
         if (namedMaterials.find(currentNamedMaterial) != namedMaterials.end())
             mtl = namedMaterials[graphicsState.currentNamedMaterial];
-        else {
+        else
+		{
             Error("Named material \"%s\" not defined. Using \"matte\".",
                   currentNamedMaterial.c_str());
             mtl = MakeMaterial("matte", mp);
         }
-    } else {
+    }
+	else
+	{
         mtl = MakeMaterial(material, mp);
         if (!mtl && material != "" && material != "none")
             mtl = MakeMaterial("matte", mp);
@@ -1411,7 +1422,8 @@ void pbrtWorldEnd() {
     ImageTexture<RGBSpectrum, Spectrum>::ClearCache();
 }
 
-Scene *RenderOptions::MakeScene() {
+Scene *RenderOptions::MakeScene()
+{
     std::shared_ptr<Primitive> accelerator =
         MakeAccelerator(AcceleratorName, primitives, AcceleratorParams);
     if (!accelerator) accelerator = std::make_shared<BVHAccel>(primitives);
@@ -1422,16 +1434,19 @@ Scene *RenderOptions::MakeScene() {
     return scene;
 }
 
-Integrator *RenderOptions::MakeIntegrator() const {
+Integrator* RenderOptions::MakeIntegrator() const
+{
     std::shared_ptr<const Camera> camera(MakeCamera());
-    if (!camera) {
+    if (!camera)
+	{
         Error("Unable to create camera");
         return nullptr;
     }
 
     std::shared_ptr<Sampler> sampler =
         MakeSampler(SamplerName, SamplerParams, camera->film);
-    if (!sampler) {
+    if (!sampler)
+	{
         Error("Unable to create sampler.");
         return nullptr;
     }
@@ -1458,7 +1473,8 @@ Integrator *RenderOptions::MakeIntegrator() const {
     }
 
     if (renderOptions->haveScatteringMedia && IntegratorName != "volpath" &&
-        IntegratorName != "bdpt" && IntegratorName != "mlt") {
+        IntegratorName != "bdpt" && IntegratorName != "mlt")
+	{
         Warning(
             "Scene has scattering media but \"%s\" integrator doesn't support "
             "volume scattering. Consider using \"volpath\", \"bdpt\", or "
@@ -1474,10 +1490,12 @@ Integrator *RenderOptions::MakeIntegrator() const {
     return integrator;
 }
 
-Camera *RenderOptions::MakeCamera() const {
+Camera *RenderOptions::MakeCamera() const
+{
     std::unique_ptr<Filter> filter = MakeFilter(FilterName, FilterParams);
     Film *film = MakeFilm(FilmName, FilmParams, std::move(filter));
-    if (!film) {
+    if (!film)
+	{
         Error("Unable to create film.");
         return nullptr;
     }
