@@ -41,65 +41,71 @@
 #include "material.h"
 #include "reflection.h"
 #include "adaptive.h"
-#include "kdtree.h"
+//#include "kdtree.h"
 
-class AdaptiveHalfangleBRDF : public BxDF{
-public:
-	AdaptiveHalfangleBRDF( float *d, 	
-					uint32_t nth, uint32_t ntd, uint32_t npd, 
-					uint32_t mto, uint32_t mpo, uint32_t mth, 
-					uint32_t mph, 
-					vector<Distribution2DAdaptive*> dist);
-	~AdaptiveHalfangleBRDF(){
-		if (brdf)
-			delete[] brdf;
-		for (uint32_t i = 0; i < distribution.size(); ++i)
-			if (distribution[i])
-		        delete distribution[i];
-	}
-	Spectrum f(const Vector &wo, const Vector &wi) const;
-	Spectrum Sample_f(const Vector &wo, Vector *wi, 
-					float u1, float u2, float *pdf) const;
-	float Pdf(const Vector &wi, const Vector &wo) const;
-    float *brdf;
-    uint32_t nThetaH, nThetaD, nPhiD;
-    uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
-	vector<Distribution2DAdaptive *> distribution;
-};
+#include <vector>
 
-// MeasuredAdaptiveMaterial Declarations
-class MeasuredAdaptiveMaterial : public Material {
-public:
-    // MeasuredAdaptiveMaterial Public Methods
-    MeasuredAdaptiveMaterial(const string &filename, 
-						Reference<Texture<float> > bump, int type,
-						int mSize, float mPDist, float mRDist);
-	~MeasuredAdaptiveMaterial(){
-		if (regularHalfangleData)
-			delete[]regularHalfangleData;
-		for (uint32_t i = 0; i < distribution.size(); ++i)
-			if (distribution[i])
-		        delete distribution[i];
+namespace pbrt {
 
-	}
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom,
-                  const DifferentialGeometry &dgShading,
-                  MemoryArena &arena) const;
-	void mapToViewHalfangle(float *tmpData, float *finalData);
-	int lookup_brdf_val(float *brdf, double thetaOut, double phiOut,
-						double thetaHalf, double phiHalf);
+	class AdaptiveHalfangleBRDF : public BxDF
+	{
+		typedef Vector3<Float> Point;
+		typedef Vector3<Float> Vector;
 
-private:
-    // MeasuredAdaptiveMaterial Private Data
-    float *regularHalfangleData;
-    uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
-    uint32_t nThetaH, nThetaD, nPhiD;
-	vector<Distribution2DAdaptive *> distribution;
-    Reference<Texture<float> > bumpMap;
-};
+	public:
+		AdaptiveHalfangleBRDF(float *d,
+			uint32_t nth, uint32_t ntd, uint32_t npd,
+			uint32_t mto, uint32_t mpo, uint32_t mth,
+			uint32_t mph,
+			vector<Distribution2DAdaptive*> dist);
+
+		~AdaptiveHalfangleBRDF()
+		{
+			if (brdf) delete[] brdf;
+			for (uint32_t i = 0; i < distribution.size(); ++i)
+				if (distribution[i]) delete distribution[i];
+		}
+		Spectrum f(const Vector &wo, const Vector &wi) const;
+		Spectrum Sample_f(const Vector &wo, Vector *wi,
+			float u1, float u2, float *pdf) const;
+		float Pdf(const Vector &wi, const Vector &wo) const;
+		float *brdf;
+		uint32_t nThetaH, nThetaD, nPhiD;
+		uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
+		vector<Distribution2DAdaptive *> distribution;
+	};
+
+	// MeasuredAdaptiveMaterial Declarations
+	class MeasuredAdaptiveMaterial : public Material
+	{
+	public:
+		// MeasuredAdaptiveMaterial Public Methods
+		MeasuredAdaptiveMaterial(const string &filename, Reference<Texture<float> > bump, int type,
+			int mSize, float mPDist, float mRDist);
+		~MeasuredAdaptiveMaterial()
+		{
+			if (regularHalfangleData) delete[]regularHalfangleData;
+			for (uint32_t i = 0; i < distribution.size(); ++i)
+				if (distribution[i]) delete distribution[i];
+
+		}
+		BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const;
+		void mapToViewHalfangle(float *tmpData, float *finalData);
+		int lookup_brdf_val(float *brdf, double thetaOut, double phiOut,
+			double thetaHalf, double phiHalf);
+
+	private:
+		// MeasuredAdaptiveMaterial Private Data
+		float *regularHalfangleData;
+		uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
+		uint32_t nThetaH, nThetaD, nPhiD;
+		vector<Distribution2DAdaptive *> distribution;
+		Reference<Texture<float> > bumpMap;
+	};
 
 
-MeasuredAdaptiveMaterial *CreateMeasuredAdaptiveMaterial(const Transform &xform,
-        const TextureParams &mp);
+	MeasuredAdaptiveMaterial *CreateMeasuredAdaptiveMaterial(const Transform &xform,
+		const TextureParams &mp);
+} //namespace
 
 #endif // PBRT_MATERIALS_MEASURED_ADAPTIVE

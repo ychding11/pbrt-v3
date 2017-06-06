@@ -329,42 +329,55 @@ namespace pbrt {
 	Distribution1DAdaptive::Distribution1DAdaptive(const float *f, int n, int type, int maxSize, float minPDist, float minRDist)
 	{
 		Distribution1D dist(f, n);
+		CDFAdaptive cdfAdaptive(&(dist.cdf[0]), dist.Count(), type, maxSize, minPDist, minRDist);
+		adaptiveCount = cdfAdaptive.count;
 		uniformCount = dist.Count();
 		funcInt = dist.funcInt;
-		CDFAdaptive cdfAdaptive(&(dist.cdf[0]), uniformCount, type, maxSize, minPDist, minRDist);
-		adaptiveCount = cdfAdaptive.count;
-		//func = new float[adaptiveCount];
-		//cdf = new float[adaptiveCount];
-		//index = new int[adaptiveCount];
-		std::vector<Float> func(adaptiveCount);
-		std::vector<Float> cdf(adaptiveCount);
-		std::vector<int> index(adaptiveCount);
+		func.reserve(adaptiveCount);
+		cdf.reserve(adaptiveCount);
+		index.reserve(adaptiveCount);
 		cdfAdaptive.toArrays(cdf, index);
 		cdfAdaptive.updateFunc(dist.func, func);
 	}
 
-	Distribution1DAdaptive::Distribution1DAdaptive( Distribution1D *dist, int type, int maxSize, float minPDist, float minRDist)
+	Distribution1DAdaptive::Distribution1DAdaptive(Distribution1D *dist, int type, int maxSize, float minPDist, float minRDist)
 	{
+		CDFAdaptive cdfAdaptive(&(dist->cdf[0]), dist->Count(), type, maxSize, minPDist, minRDist);
+		adaptiveCount = cdfAdaptive.count;
 		uniformCount = dist->Count();
 		funcInt = dist->funcInt;
-		CDFAdaptive cdfAdaptive(&(dist->cdf[0]), uniformCount, type, maxSize, minPDist, minRDist);
-		adaptiveCount = cdfAdaptive.count;
-		//func = new float[adaptiveCount];
-		//cdf = new float[adaptiveCount];
-		//index = new int[adaptiveCount];
-		std::vector<Float> func(adaptiveCount);
-		std::vector<Float> cdf(adaptiveCount);
-		std::vector<int> index(adaptiveCount);
+		func.reserve(adaptiveCount);
+		cdf.reserve(adaptiveCount);
+		index.reserve(adaptiveCount);
 		cdfAdaptive.toArrays(cdf, index);
 		cdfAdaptive.updateFunc(dist->func, func);
 	}
 
 	float Distribution1DAdaptive::SampleContinuous(float u, float *pdf, int *off = NULL)
 	{
-		float *ptr = std::upper_bound(cdf, cdf + adaptiveCount, u);
-		int offset = max(0, int(ptr - cdf - 1));
-		offset = min(adaptiveCount - 1, offset);
+		int offset = FindInterval(cdf.size(), [&](int index) { return cdf[index] <= u; });
 		if (off) *off = offset;
+		//float *ptr = std::upper_bound(cdf, cdf + adaptiveCount, u);
+		//int offset = max(0, int(ptr - cdf - 1));
+		//offset = min(adaptiveCount - 1, offset);
+		//if (off) *off = offset;
+
+		// Compute offset along CDF segment
+		Float du = u - cdf[offset];
+		if ((cdf[offset + 1] - cdf[offset]) > 0)
+		{
+			CHECK_GT(cdf[offset + 1], cdf[offset]);
+			du /= (cdf[offset + 1] - cdf[offset]);
+		}
+		DCHECK(!std::isnan(du));
+
+		// Compute PDF for sampled offset
+		if (pdf) *pdf = (funcInt > 0) ? func[offset] / funcInt : 0;
+
+		// Return $x\in{}[0,1)$ corresponding to sample
+		//return (offset + du) / Count();
+
+		/*
 		float du = (u - cdf[offset]) / (cdf[offset + 1] - cdf[offset]);
 		if (pdf)
 		{
@@ -373,41 +386,43 @@ namespace pbrt {
 			else
 				*pdf = 0.f;
 		}
+		*/
 		return (index[offset] + du) / uniformCount;
 	}
 
-	float Distribution1DAdaptive::Pdf(float u, int &adaptiveU) {
+	float Distribution1DAdaptive::Pdf(float u, int &adaptiveU)
+	{
+		if (funcInt == 0) return 0.f;
 		int offset = Clamp(int(u * uniformCount), 0, uniformCount - 1);
-		if (funcInt == 0)
-			return 0.f;
-		int *ptr = std::upper_bound(index, index + adaptiveCount,
-			offset);
-		adaptiveU = max(0, int(ptr - index - 1));
-		adaptiveU = min(adaptiveCount - 1, adaptiveU);
+		adaptiveU = FindInterval(index.size(), [&](int index) { return cdf[index] <= offset; });
+		//int *ptr = std::upper_bound(index, index + adaptiveCount, offset);
+		//adaptiveU = max(0, int(ptr - index - 1));
+		//adaptiveU = min(adaptiveCount - 1, adaptiveU);
 		return func[adaptiveU] / funcInt;
 	}
 
-	Distribution2DAdaptive::Distribution2DAdaptive(const float *data, int nu, int nv, int type, int maxSize,
-		float minPDist, float minRDist) {
-		Distribution2D *dist = new Distribution2D(data, nu, nv);
-		pMarginal = new Distribution1DAdaptive(dist->pMarginal, type,
-			maxSize, minPDist,
-			minRDist);
-		Distribution1DAdaptive *temp;
+	Distribution2DAdaptive::Distribution2DAdaptive(const float *data, int nu, int nv, int type, int maxSize, float minPDist, float minRDist)
+	{
+		Distribution2D dist(data, nu, nv);
+		pMarginal = new Distribution1DAdaptive(dist.pMarginal.get(), type, maxSize, minPDist, minRDist);
+		//Distribution1DAdaptive *temp;
 		float *func = new float[nu];
 		int na = pMarginal->adaptiveCount - 1;
 		int sum = 0;
-		for (int k = 0; k < na; k++) {
-			for (int i = 0; i < nu; i++) {
-				func[i] = 0;
-				for (int j = pMarginal->index[k];
-					j < pMarginal->index[k + 1]; j++) {
-					func[i] += dist->pConditionalV[j]->func[i];
+		for (int k = 0; k < na; k++)
+		{
+			for (int i = 0; i < nu; i++)
+			{
+				func[i] = 0.0;
+				int startIndex = pMarginal->index[k]; 
+				int endIndex   = pMarginal->index[k + 1]; 
+				for (int j = startIndex; j < endIndex; j++)
+				{
+					func[i] += dist.pConditionalV[j]->func[i];
 				}
-				func[i] /= pMarginal->index[k + 1] - pMarginal->index[k];
+				if (endIndex - startIndex > 0) func[i] /= endIndex - startIndex;
 			}
-			temp = new Distribution1DAdaptive(func, nu, type, maxSize,
-				minPDist, minRDist);
+			Distribution1DAdaptive *temp = new Distribution1DAdaptive(func, nu, type, maxSize, minPDist, minRDist);
 			pConditionalV.push_back(temp);
 			sum += (temp->adaptiveCount - 1);
 		}
@@ -415,9 +430,8 @@ namespace pbrt {
 		conditionalCount = int(sum / float(na));
 	}
 
-	void Distribution2DAdaptive::SampleContinuous(float u0, float u1,
-		float uv[2],
-		float *pdf) {
+	void Distribution2DAdaptive::SampleContinuous(float u0, float u1, float uv[2], float *pdf)
+	{
 		float pdfs[2];
 		int v;
 		uv[1] = pMarginal->SampleContinuous(u1, &pdfs[1], &v);
@@ -425,20 +439,21 @@ namespace pbrt {
 		*pdf = pdfs[0] * pdfs[1];
 	}
 
-	float Distribution2DAdaptive::Pdf(float u, float v) {
+	float Distribution2DAdaptive::Pdf(float u, float v)
+	{
 		int adaptiveV = 0, adaptiveU = 0;
 		float pdfV = pMarginal->Pdf(v, adaptiveV);
 		float pdfU = pConditionalV[adaptiveV]->Pdf(u, adaptiveU);
 		return pdfV * pdfU;
 	}
 
-	Distribution2DAdaptive::~Distribution2DAdaptive() {
+	Distribution2DAdaptive::~Distribution2DAdaptive()
+	{
 		//	if (pMarginal)
 		delete pMarginal;
 		for (uint32_t i = 0; i < pConditionalV.size(); ++i)
 			//		if(pConditionalV[i])
 			delete pConditionalV[i];
 	}
-
 
 } //name space
