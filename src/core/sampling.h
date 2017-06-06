@@ -144,6 +144,7 @@ class Distribution2D {
     // Distribution2D Private Data
     std::vector<std::unique_ptr<Distribution1D>> pConditionalV;
     std::unique_ptr<Distribution1D> pMarginal;
+	friend class Distribution2DAdaptive;
 };
 
 // Sampling Inline Functions
