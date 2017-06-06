@@ -112,7 +112,8 @@ void Barrier::Wait() {
 
 static std::condition_variable workListCondition;
 
-static void workerThreadFunc(int tIndex, std::shared_ptr<Barrier> barrier) {
+static void workerThreadFunc(int tIndex, std::shared_ptr<Barrier> barrier)
+{
     LOG(INFO) << "Started execution in worker thread " << tIndex;
     ThreadIndex = tIndex;
 

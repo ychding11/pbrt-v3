@@ -49,10 +49,12 @@ namespace pbrt {
 
 // Statistics Declarations
 class StatsAccumulator;
-class StatRegisterer {
+class StatRegisterer
+{
   public:
     // StatRegisterer Public Methods
-    StatRegisterer(std::function<void(StatsAccumulator &)> func) {
+    StatRegisterer(std::function<void(StatsAccumulator &)> func)
+	{
         if (!funcs)
             funcs = new std::vector<std::function<void(StatsAccumulator &)>>;
         funcs->push_back(func);
@@ -68,17 +70,21 @@ void PrintStats(FILE *dest);
 void ClearStats();
 void ReportThreadStats();
 
-class StatsAccumulator {
+class StatsAccumulator
+{
   public:
     // StatsAccumulator Public Methods
-    void ReportCounter(const std::string &name, int64_t val) {
+    void ReportCounter(const std::string &name, int64_t val)
+	{
         counters[name] += val;
     }
-    void ReportMemoryCounter(const std::string &name, int64_t val) {
+    void ReportMemoryCounter(const std::string &name, int64_t val)
+	{
         memoryCounters[name] += val;
     }
     void ReportIntDistribution(const std::string &name, int64_t sum,
-                               int64_t count, int64_t min, int64_t max) {
+                               int64_t count, int64_t min, int64_t max)
+	{
         intDistributionSums[name] += sum;
         intDistributionCounts[name] += count;
         if (intDistributionMins.find(name) == intDistributionMins.end())
@@ -93,7 +99,8 @@ class StatsAccumulator {
                 std::max(intDistributionMaxs[name], max);
     }
     void ReportFloatDistribution(const std::string &name, double sum,
-                                 int64_t count, double min, double max) {
+                                 int64_t count, double min, double max)
+	{
         floatDistributionSums[name] += sum;
         floatDistributionCounts[name] += count;
         if (floatDistributionMins.find(name) == floatDistributionMins.end())
@@ -107,11 +114,13 @@ class StatsAccumulator {
             floatDistributionMaxs[name] =
                 std::max(floatDistributionMaxs[name], max);
     }
-    void ReportPercentage(const std::string &name, int64_t num, int64_t denom) {
+    void ReportPercentage(const std::string &name, int64_t num, int64_t denom)
+	{
         percentages[name].first += num;
         percentages[name].second += denom;
     }
-    void ReportRatio(const std::string &name, int64_t num, int64_t denom) {
+    void ReportRatio(const std::string &name, int64_t num, int64_t denom)
+	{
         ratios[name].first += num;
         ratios[name].second += denom;
     }
@@ -135,7 +144,8 @@ class StatsAccumulator {
     std::map<std::string, std::pair<int64_t, int64_t>> ratios;
 };
 
-enum class Prof {
+enum class Prof
+{
     SceneConstruction,
     AccelConstruction,
     TextureLoading,
@@ -237,23 +247,25 @@ static const char *ProfNames[] = {
     "MIPMap::Lookup() (EWA)",
 };
 
-static_assert((int)Prof::NumProfCategories ==
-                  sizeof(ProfNames) / sizeof(ProfNames[0]),
+static_assert((int)Prof::NumProfCategories == sizeof(ProfNames) / sizeof(ProfNames[0]),
               "ProfNames[] array and Prof enumerant have different "
               "numbers of entries!");
 
 extern PBRT_THREAD_LOCAL uint64_t ProfilerState;
 inline uint64_t CurrentProfilerState() { return ProfilerState; }
 
-class ProfilePhase {
+class ProfilePhase
+{
   public:
     // ProfilePhase Public Methods
-    ProfilePhase(Prof p) {
+    ProfilePhase(Prof p)
+	{
         categoryBit = ProfToBits(p);
         reset = (ProfilerState & categoryBit) == 0;
         ProfilerState |= categoryBit;
     }
-    ~ProfilePhase() {
+    ~ProfilePhase()
+	{
         if (reset) ProfilerState &= ~categoryBit;
     }
     ProfilePhase(const ProfilePhase &) = delete;
