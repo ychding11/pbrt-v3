@@ -299,20 +299,21 @@ namespace pbrt {
 	void CDFAdaptive::toArrays(std::vector<float>& cdfVal, std::vector<int>& cdfIndex)
 	{
 		//set<pair<int, float> >::iterator it;
-		int i = 0;
 		for (auto it = cdf.begin(); it != cdf.end(); it++)
 		{
-			cdfVal[i] = it->snd;
-			cdfIndex[i] = it->fst;
-			i++;
+			//cdfVal[i] = it->snd;
+			//cdfIndex[i] = it->fst;
+			//i++;
+			cdfIndex.push_back(it->first);
+			cdfVal.push_back(it->second);
 		}
 	}
 
 	void CDFAdaptive::updateFunc(const std::vector<float>&f, std::vector<float>&func)
 	{
 		auto it = cdf.begin(), nextIt = cdf.begin();
-		int index1, index2, i, n;
-		for (i=0, nextIt++; nextIt != cdf.end(); it++, nextIt++)
+		int index1, index2, n;
+		for ( nextIt++; nextIt != cdf.end(); it++, nextIt++)
 		{
 			index1 = it->fst;
 			index2 = nextIt->fst;
@@ -322,7 +323,8 @@ namespace pbrt {
 			{
 				sumFunc += f[j];
 			}
-			func[i++] = sumFunc / n;
+			//func[i++] = sumFunc / n;
+			func.push_back(sumFunc / n);
 		}
 	}
 

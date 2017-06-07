@@ -111,7 +111,7 @@ namespace pbrt {
 		std::shared_ptr<Texture<Float>> bumpMap;
 	};
 
-	MeasuredAdaptiveMaterial* CreateMeasuredAdaptiveMaterial(const Transform &xform, const TextureParams &mp);
+	MeasuredAdaptiveMaterial* CreateMeasuredAdaptiveMaterial(const TextureParams &mp);
 } //namespace
 
 #endif // PBRT_MATERIALS_MEASURED_ADAPTIVE

@@ -182,7 +182,7 @@ namespace pbrt {
 			int dims[3];
 			if (fread(dims, sizeof(int), 3, f) != 3)
 			{
-				Error("Premature end-of-file in measured BRDF data " "file \"%s\"", fName.c_str());
+				Error("Premature end-of-file in measured BRDF data file \"%s\"", fName.c_str());
 				fclose(f);
 				return;
 			}
@@ -349,14 +349,15 @@ namespace pbrt {
 			si->bsdf->Add(ARENA_ALLOC(arena, AdaptiveHalfangleBRDF)(regularHalfangleData, nThetaH, nThetaD, nPhiD, mThetaO, mPhiO, mThetaH, mPhiH, distribution));
 	}
 
-	MeasuredAdaptiveMaterial *CreateMeasuredAdaptiveMaterial( const Transform &xform, const TextureParams &mp)
+	MeasuredAdaptiveMaterial *CreateMeasuredAdaptiveMaterial( const TextureParams &mp)
 	{ 
 		std::shared_ptr<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
 		int type = mp.FindInt("compression", 0);
 		int maxSize = mp.FindInt("maxSize", 30);
 		float minPDist = mp.FindFloat("minPDist", 0.05);
 		float minRDist = mp.FindFloat("minRDist", 0.05);
-		return new MeasuredAdaptiveMaterial(mp.FindFilename("filename"), bumpMap, type, maxSize, minPDist, minRDist);
+		std::string filename = mp.FindFilename("brdffilename");
+		return new MeasuredAdaptiveMaterial(filename, bumpMap, type, maxSize, minPDist, minRDist);
 	}
 
 } //namespace
