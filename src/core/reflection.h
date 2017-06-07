@@ -1,4 +1,4 @@
-
+ï»¿
 /*
     pbrt source code is Copyright(c) 1998-2016
                         Matt Pharr, Greg Humphreys, and Wenzel Jakob.
@@ -224,7 +224,13 @@ class BxDF
     BxDF(BxDFType type) : type(type) {}
     bool MatchesFlags(BxDFType t) const { return (type & t) == type; }
 
+	// It returns the value of the distribution function for the given pair of directions.
+	// See page 520 for details.
     virtual Spectrum f(const Vector3f &wo, const Vector3f &wi) const = 0;
+
+	// computes the direction of incident light Ï‰i given an outgoing direction
+	// Ï‰o and returns the value of the BxDF for the pair of directions.
+	// see Page 521 for details.
     virtual Spectrum Sample_f(const Vector3f &wo, Vector3f *wi,
                               const Point2f &sample, Float *pdf,
                               BxDFType *sampledType = nullptr) const;
@@ -475,7 +481,7 @@ class OrenNayar : public BxDF {
 };
 
 // The class modeled surfaces as collections of perfectly smooth mirrored microfacets
-// It uses Torrance–Sparrow model.
+// It uses Torranceâ€“Sparrow model.
 // See page 552
 class MicrofacetReflection : public BxDF
 {
@@ -501,7 +507,7 @@ class MicrofacetReflection : public BxDF
     const Fresnel *fresnel;
 };
 
-// It uses Torrance–Sparrow model.
+// It uses Torranceâ€“Sparrow model.
 // See page 552
 class MicrofacetTransmission : public BxDF
 {
@@ -561,7 +567,7 @@ class FresnelBlend : public BxDF
 
 // Layered materials like metals with smooth or rough coatings or fabrics,
 // which are often partially retro-reflective. Reflection models like
-// Torrance–Sparrow and Oren–Nayar cannot accurately represent.
+// Torranceâ€“Sparrow and Orenâ€“Nayar cannot accurately represent.
 // FourierBSDF represents BSDFs with sums of scaled cosine terms using the
 // Fourier basis.This representation is accurate, space-efficient, and works
 // well withMonte Carlo integration

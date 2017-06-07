@@ -68,39 +68,45 @@ namespace pbrt {
 		Vector why(-whSinPhi, whCosPhi, 0);
 		Vector wd(Dot(wi, whx), Dot(wi, why), Dot(wi, wh));
 
-		float wdTheta = SphericalTheta(wd), wdPhi = SphericalPhi(wd);
+		float wdTheta = SphericalTheta(wd);
+		float wdPhi = SphericalPhi(wd);
 		if (wdPhi > M_PI) wdPhi -= M_PI;
 
 #define REMAP(V, MAX, COUNT) \
         Clamp(int((V) / (MAX) * (COUNT)), 0, (COUNT)-1)
-		int whThetaIndex = REMAP(
-			sqrtf(max(0.f, whTheta / (M_PI / 2.f))),
-			1.f, nThetaH);
+
+		int whThetaIndex = REMAP( sqrtf(max(0.f, whTheta / (M_PI / 2.f))), 1.f, nThetaH); // has errors?
 		int wdThetaIndex = REMAP(wdTheta, M_PI / 2.f, nThetaD);
-		int wdPhiIndex = REMAP(wdPhi, M_PI, nPhiD);
+		int wdPhiIndex   = REMAP(wdPhi, M_PI, nPhiD);
 #undef REMAP
 
-		int index = wdPhiIndex + nPhiD *
-			(wdThetaIndex + whThetaIndex * nThetaD);
+		int index = wdPhiIndex + nPhiD * (wdThetaIndex + whThetaIndex * nThetaD);
 		return Spectrum::FromRGB(&brdf[3 * index]);
 	}
 
-	Spectrum AdaptiveHalfangleBRDF::Sample_f(const Vector &wo, Vector *wi, float u1, float u2, float *pdf) const
+	Spectrum AdaptiveHalfangleBRDF::Sample_f(const Vector &wo, Vector *wi, const Point2f &sample, float *pdf, BxDFType *sampledType) const
 	{
 		float uv[2], mapPdf;
-		float woTheta = SphericalTheta(wo), woPhi = SphericalPhi(wo);
+		float woTheta = SphericalTheta(wo);
+		float woPhi = SphericalPhi(wo);
+
 #define REMAP(V, MAX, COUNT) \
 	Clamp(int((V) / (MAX) * (COUNT)), 0, (COUNT)-1)
+
 		int woThetaIndex = REMAP(woTheta, (M_PI / 2.f), mThetaO);
-		int woPhiIndex = REMAP(woPhi, (M_PI * 2.f), mPhiO);
+		int woPhiIndex   = REMAP(woPhi, (M_PI * 2.f), mPhiO);
 #undef REMAP
+
 		int woIndex = woThetaIndex*mPhiO + woPhiIndex;
-		distribution[woIndex]->SampleContinuous(u1, u2, uv, &mapPdf);
+		distribution[woIndex]->SampleContinuous(sample.x, sample.y, uv, &mapPdf);
 		if (mapPdf == 0.f) return 0.f;
 
-		float theta = uv[1] * (M_PI / 2.f), phi = uv[0] * (2.f * M_PI);
-		float costheta = cosf(theta), sintheta = sinf(theta);
-		float sinphi = sinf(phi), cosphi = cosf(phi);
+		float theta = uv[1] * (M_PI / 2.f);
+		float phi   = uv[0] * (2.f * M_PI);
+		float costheta = cosf(theta),
+			  sintheta = sinf(theta);
+		float sinphi = sinf(phi),
+			  cosphi = cosf(phi);
 		Vector wh = Normalize(Vector(sintheta * cosphi, sintheta * sinphi, costheta));
 		if (!SameHemisphere(wo, wh)) wh = -wh;
 		*wi = -wo + 2.f * Dot(wo, wh) * wh;
@@ -114,21 +120,30 @@ namespace pbrt {
 	float AdaptiveHalfangleBRDF::Pdf(const Vector &wo, const Vector &wi) const
 	{
 		if (!SameHemisphere(wo, wi)) return 0.f;
-		float woTheta = SphericalTheta(wo), woPhi = SphericalPhi(wo);
+		float woTheta = SphericalTheta(wo),
+			  woPhi   = SphericalPhi(wo);
+
 #define REMAP(V, MAX, COUNT) \
 	Clamp(int((V) / (MAX) * (COUNT)), 0, (COUNT)-1)
+
 		int woThetaIndex = REMAP(woTheta, (M_PI / 2.f), mThetaO);
-		int woPhiIndex = REMAP(woPhi, (M_PI * 2.f), mPhiO);
+		int woPhiIndex   = REMAP(woPhi, (M_PI * 2.f), mPhiO);
 #undef REMAP
+
 		int woIndex = woThetaIndex*mPhiO + woPhiIndex;
 
 		Vector wh = Normalize(wo + wi);
-		float whTheta = SphericalTheta(wh), whPhi = SphericalPhi(wh);
+		float whTheta = SphericalTheta(wh),
+			  whPhi   = SphericalPhi(wh);
 		float v = whTheta / (M_PI / 2.f);
 		float u = whPhi / (M_PI * 2.f);
-		float pdf = distribution[woIndex]->Pdf(u, v) /
-			(4.f * Dot(wo, wh));
+		float pdf = distribution[woIndex]->Pdf(u, v) / (4.f * Dot(wo, wh));
 		return pdf;
+	}
+
+	std::string AdaptiveHalfangleBRDF::ToString() const
+	{
+		return std::string("[AdaptiveHalfangleBRDF]");
 	}
 
 	// MeasuredAdaptiveMaterial Method Definitions
@@ -136,23 +151,20 @@ namespace pbrt {
 	static map<string, vector <Distribution2DAdaptive *> > loadedDistributionAdaptive;
 
 	MeasuredAdaptiveMaterial::MeasuredAdaptiveMaterial( const string &fName,
-		Reference<Texture<float> > bump, int tp, int mSize, float mPDist, float mRDist)
+		const std::shared_ptr<Texture<float> > &bump, int tp, int mSize, float mPDist, float mRDist)
+		: bumpMap(bump)
+		, regularHalfangleData(nullptr)
 	{
-		bumpMap = bump;
+		//bumpMap = bump;
+		//regularHalfangleData = NULL;
 		const char *suffix = strrchr(fName.c_str(), '.');
-		regularHalfangleData = NULL;
 		if (!suffix)
 			Error("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", fName.c_str());
 		else
 		{
 			// Load RegularHalfangle BRDF Data
-			nThetaH = 90;
-			nThetaD = 90;
-			nPhiD = 180;
-			mThetaO = 32;
-			mPhiO = 16;
-			mThetaH = 256;
-			mPhiH = 32;
+			nThetaH = 90; nThetaD = 90; nPhiD = 180;
+			mThetaO = 32; mPhiO = 16; mThetaH = 256; mPhiH = 32;
 
 			if (loadedRegularHalfangleAdaptive.find(fName) != loadedRegularHalfangleAdaptive.end())
 			{
@@ -183,10 +195,11 @@ namespace pbrt {
 			}
 
 			regularHalfangleData = new float[3 * n];
+
 			const uint32_t chunkSize = 2 * nPhiD;
-			double *tmp = ALLOCA(double, chunkSize);
+			CHECK((n % chunkSize) == 0);
 			uint32_t nChunks = n / chunkSize;
-			Assert((n % chunkSize) == 0);
+			double *tmp = ALLOCA(double, chunkSize);
 			float scales[3] = { 1.f / 1500.f, 1.15f / 1500.f, 1.66f / 1500.f };
 			for (int c = 0; c < 3; ++c)
 			{
@@ -237,19 +250,20 @@ namespace pbrt {
 	{
 		int index = 0, ind;
 		double val, maxVal = 0.0;
-		for (uint32_t i = 0; i < mThetaO; i++) {
+		for (uint32_t i = 0; i < mThetaO; i++)
+		{
 			double thetaOut = i * 0.5 * M_PI / mThetaO;
-			for (uint32_t j = 0; j < mPhiO; j++) {
+			for (uint32_t j = 0; j < mPhiO; j++)
+			{
 				double phiOut = j * 2 * M_PI / mPhiO;
-				for (uint32_t k = 0; k < mThetaH; k++) {
+				for (uint32_t k = 0; k < mThetaH; k++)
+				{
 					double thetaHalf = k * 0.5 * M_PI / mThetaH;
-					for (uint32_t l = 0; l < mPhiH; l++) {
+					for (uint32_t l = 0; l < mPhiH; l++)
+					{
 						double phiHalf = l * 2 * M_PI / mPhiH;
-						ind = lookup_brdf_val(tmpData, thetaOut,
-							phiOut, thetaHalf,
-							phiHalf);
-						val = tmpData[ind] + tmpData[ind + 1] +
-							tmpData[ind + 2];
+						ind = lookup_brdf_val(tmpData, thetaOut, phiOut, thetaHalf, phiHalf);
+						val = tmpData[ind] + tmpData[ind + 1] + tmpData[ind + 2];
 						finalData[index] = val;
 						if (val > maxVal)
 							maxVal = val;
@@ -267,11 +281,8 @@ namespace pbrt {
 		fclose(f);*/
 	}
 
-	int MeasuredAdaptiveMaterial::lookup_brdf_val(float *brdf,
-		double thetaOut,
-		double phiOut,
-		double thetaHalf,
-		double phiHalf) {
+	int MeasuredAdaptiveMaterial::lookup_brdf_val(float *brdf, double thetaOut, double phiOut, double thetaHalf, double phiHalf)
+	{
 		double hz = cos(thetaHalf);
 		double sinThetaHalf = sin(thetaHalf);
 		double hx = sinThetaHalf * cos(phiHalf);
@@ -293,8 +304,7 @@ namespace pbrt {
 		float whTheta = SphericalTheta(wh);
 		float whCosPhi = CosPhi(wh), whSinPhi = SinPhi(wh);
 		float whCosTheta = CosTheta(wh), whSinTheta = SinTheta(wh);
-		Vector whx(whCosPhi * whCosTheta, whSinPhi * whCosTheta,
-			-whSinTheta);
+		Vector whx(whCosPhi * whCosTheta, whSinPhi * whCosTheta, -whSinTheta);
 		Vector why(-whSinPhi, whCosPhi, 0);
 		Vector wd(Dot(wi, whx), Dot(wi, why), Dot(wi, wh));
 
@@ -305,19 +315,17 @@ namespace pbrt {
 		// Compute indices _whThetaIndex_, _wdThetaIndex_, _wdPhiIndex_
 #define REMAP(V, MAX, COUNT) \
         Clamp(int((V) / (MAX) * (COUNT)), 0, (COUNT)-1)
-		int whThetaIndex = REMAP(sqrtf(max(0.f, whTheta / (M_PI / 2.f))),
-			1.f, nThetaH);
+		int whThetaIndex = REMAP(sqrtf(max(0.f, whTheta / (M_PI / 2.f))), 1.f, nThetaH);
 		int wdThetaIndex = REMAP(wdTheta, M_PI / 2.f, nThetaD);
 		int wdPhiIndex = REMAP(wdPhi, M_PI, nPhiD);
 #undef REMAP
-		return wdPhiIndex + nPhiD *
-			(wdThetaIndex + whThetaIndex * nThetaD);
+
+		return wdPhiIndex + nPhiD * (wdThetaIndex + whThetaIndex * nThetaD);
 	}
 
-	BSDF *MeasuredAdaptiveMaterial::GetBSDF(
-		const DifferentialGeometry &dgGeom,
-		const DifferentialGeometry &dgShading,
-		MemoryArena &arena) const {
+#if 0
+	BSDF *MeasuredAdaptiveMaterial::GetBSDF( const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const
+	{
 		// Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
 		DifferentialGeometry dgs;
 		if (bumpMap)
@@ -326,25 +334,29 @@ namespace pbrt {
 			dgs = dgShading;
 		BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
 		if (regularHalfangleData)
-			bsdf->Add(BSDF_ALLOC(arena, AdaptiveHalfangleBRDF)
-			(regularHalfangleData,
-				nThetaH, nThetaD, nPhiD,
-				mThetaO, mPhiO, mThetaH, mPhiH, distribution));
+			bsdf->Add(BSDF_ALLOC(arena, AdaptiveHalfangleBRDF) (regularHalfangleData, nThetaH, nThetaD, nPhiD, mThetaO, mPhiO, mThetaH, mPhiH, distribution));
 		return bsdf;
 	}
+#endif
 
+	void MeasuredAdaptiveMaterial::ComputeScatteringFunctions(SurfaceInteraction *si, MemoryArena &arena,
+		TransportMode mode,
+		bool allowMultipleLobes) const
+	{
+		if (bumpMap) Bump(bumpMap, si);
+		si->bsdf = ARENA_ALLOC(arena, BSDF)(*si);
+		if (regularHalfangleData)
+			si->bsdf->Add(ARENA_ALLOC(arena, AdaptiveHalfangleBRDF)(regularHalfangleData, nThetaH, nThetaD, nPhiD, mThetaO, mPhiO, mThetaH, mPhiH, distribution));
+	}
 
-	MeasuredAdaptiveMaterial *CreateMeasuredAdaptiveMaterial(
-		const Transform &xform,
-		const TextureParams &mp) {
-		Reference<Texture<float> > bumpMap =
-			mp.GetFloatTextureOrNull("bumpmap");
+	MeasuredAdaptiveMaterial *CreateMeasuredAdaptiveMaterial( const Transform &xform, const TextureParams &mp)
+	{ 
+		std::shared_ptr<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
 		int type = mp.FindInt("compression", 0);
 		int maxSize = mp.FindInt("maxSize", 30);
 		float minPDist = mp.FindFloat("minPDist", 0.05);
 		float minRDist = mp.FindFloat("minRDist", 0.05);
-		return new MeasuredAdaptiveMaterial(mp.FindFilename("filename"),
-			bumpMap, type, maxSize,
-			minPDist, minRDist);
+		return new MeasuredAdaptiveMaterial(mp.FindFilename("filename"), bumpMap, type, maxSize, minPDist, minRDist);
 	}
+
 } //namespace

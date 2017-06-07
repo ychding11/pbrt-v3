@@ -47,6 +47,9 @@
 
 namespace pbrt {
 
+#ifndef M_PI
+#define M_PI (3.14159265358939723846f)
+#endif
 	class AdaptiveHalfangleBRDF : public BxDF
 	{
 		typedef Vector3<Float> Point;
@@ -56,8 +59,7 @@ namespace pbrt {
 		AdaptiveHalfangleBRDF(float *d,
 			uint32_t nth, uint32_t ntd, uint32_t npd,
 			uint32_t mto, uint32_t mpo, uint32_t mth,
-			uint32_t mph,
-			vector<Distribution2DAdaptive*> dist);
+			uint32_t mph, vector<Distribution2DAdaptive*> dist);
 
 		~AdaptiveHalfangleBRDF()
 		{
@@ -65,22 +67,24 @@ namespace pbrt {
 			for (uint32_t i = 0; i < distribution.size(); ++i)
 				if (distribution[i]) delete distribution[i];
 		}
-		Spectrum f(const Vector &wo, const Vector &wi) const;
-		Spectrum Sample_f(const Vector &wo, Vector *wi,
-			float u1, float u2, float *pdf) const;
-		float Pdf(const Vector &wi, const Vector &wo) const;
+		Spectrum f(const Vector &wo, const Vector &wi) const override;
+		Spectrum Sample_f(const Vector &wo, Vector *wi, const Point2f &sample, float *pdf, BxDFType *sampledType = nullptr) const override;
+		float Pdf(const Vector &wi, const Vector &wo) const override;
+		std::string ToString() const override;
+
 		float *brdf;
 		uint32_t nThetaH, nThetaD, nPhiD;
 		uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
-		vector<Distribution2DAdaptive *> distribution;
+		vector<Distribution2DAdaptive* > distribution;
 	};
 
 	// MeasuredAdaptiveMaterial Declarations
 	class MeasuredAdaptiveMaterial : public Material
 	{
+		typedef Vector3<Float> Vector;
 	public:
 		// MeasuredAdaptiveMaterial Public Methods
-		MeasuredAdaptiveMaterial(const string &filename, Reference<Texture<float> > bump, int type,
+		MeasuredAdaptiveMaterial(const string &filename, const std::shared_ptr<Texture<float> >& bump, int type,
 			int mSize, float mPDist, float mRDist);
 		~MeasuredAdaptiveMaterial()
 		{
@@ -89,10 +93,13 @@ namespace pbrt {
 				if (distribution[i]) delete distribution[i];
 
 		}
-		BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const;
+
+		void ComputeScatteringFunctions(SurfaceInteraction *si, MemoryArena &arena, TransportMode mode,
+			bool allowMultipleLobes) const override;
+
+		//BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const;
 		void mapToViewHalfangle(float *tmpData, float *finalData);
-		int lookup_brdf_val(float *brdf, double thetaOut, double phiOut,
-			double thetaHalf, double phiHalf);
+		int lookup_brdf_val(float *brdf, double thetaOut, double phiOut, double thetaHalf, double phiHalf);
 
 	private:
 		// MeasuredAdaptiveMaterial Private Data
@@ -100,12 +107,11 @@ namespace pbrt {
 		uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
 		uint32_t nThetaH, nThetaD, nPhiD;
 		vector<Distribution2DAdaptive *> distribution;
-		Reference<Texture<float> > bumpMap;
+		//Reference<Texture<float> > bumpMap;
+		std::shared_ptr<Texture<Float>> bumpMap;
 	};
 
-
-	MeasuredAdaptiveMaterial *CreateMeasuredAdaptiveMaterial(const Transform &xform,
-		const TextureParams &mp);
+	MeasuredAdaptiveMaterial* CreateMeasuredAdaptiveMaterial(const Transform &xform, const TextureParams &mp);
 } //namespace
 
 #endif // PBRT_MATERIALS_MEASURED_ADAPTIVE

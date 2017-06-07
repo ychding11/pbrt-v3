@@ -51,6 +51,13 @@ enum class TransportMode { Radiance, Importance };
 class Material {
   public:
     // Material Interface
+	// This method is given a SurfaceInteraction object that contains geometric properties
+	// at an intersection point on the surface of a shape.The method’s implementation is
+	//	  responsible for determining the reflective properties at the point and initializing the
+	//	  SurfaceInteraction::bsdf member variable with a corresponding BSDF class instance.If
+	//	  the material includes subsurface scattering, then the SurfaceInteraction::bssrdf member
+	//	  should be initialized as well.
+	// See Page 582 for details.
     virtual void ComputeScatteringFunctions(SurfaceInteraction *si,
                                             MemoryArena &arena,
                                             TransportMode mode,
