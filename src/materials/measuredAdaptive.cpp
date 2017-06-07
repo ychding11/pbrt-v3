@@ -135,18 +135,16 @@ namespace pbrt {
 	static map<string, float *> loadedRegularHalfangleAdaptive;
 	static map<string, vector <Distribution2DAdaptive *> > loadedDistributionAdaptive;
 
-	MeasuredAdaptiveMaterial::MeasuredAdaptiveMaterial(
-		const string &fName,
-		Reference<Texture<float> > bump,
-		int tp, int mSize, float mPDist, float mRDist) {
+	MeasuredAdaptiveMaterial::MeasuredAdaptiveMaterial( const string &fName,
+		Reference<Texture<float> > bump, int tp, int mSize, float mPDist, float mRDist)
+	{
 		bumpMap = bump;
 		const char *suffix = strrchr(fName.c_str(), '.');
 		regularHalfangleData = NULL;
 		if (!suffix)
-			Error("No suffix in measured BRDF filename \"%s\".  "
-				"Can't determine file type (.brdf / .merl)",
-				fName.c_str());
-		else {
+			Error("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", fName.c_str());
+		else
+		{
 			// Load RegularHalfangle BRDF Data
 			nThetaH = 90;
 			nThetaD = 90;
@@ -156,29 +154,29 @@ namespace pbrt {
 			mThetaH = 256;
 			mPhiH = 32;
 
-			if (loadedRegularHalfangleAdaptive.find(fName) !=
-				loadedRegularHalfangleAdaptive.end()) {
+			if (loadedRegularHalfangleAdaptive.find(fName) != loadedRegularHalfangleAdaptive.end())
+			{
 				regularHalfangleData = loadedRegularHalfangleAdaptive[fName];
 				distribution = loadedDistributionAdaptive[fName];
 				return;
 			}
 
 			FILE *f = fopen(fName.c_str(), "rb");
-			if (!f) {
-				Error("Unable to open BRDF data file \"%s\"",
-					fName.c_str());
+			if (!f)
+			{
+				Error("Unable to open BRDF data file \"%s\"", fName.c_str());
 				return;
 			}
 			int dims[3];
-			if (fread(dims, sizeof(int), 3, f) != 3) {
-				Error("Premature end-of-file in measured BRDF data "
-					"file \"%s\"",
-					fName.c_str());
+			if (fread(dims, sizeof(int), 3, f) != 3)
+			{
+				Error("Premature end-of-file in measured BRDF data " "file \"%s\"", fName.c_str());
 				fclose(f);
 				return;
 			}
 			uint32_t n = dims[0] * dims[1] * dims[2];
-			if (n != nThetaH * nThetaD * nPhiD) {
+			if (n != nThetaH * nThetaD * nPhiD)
+			{
 				Error("Dimensions don't match\n");
 				fclose(f);
 				return;
@@ -189,25 +187,23 @@ namespace pbrt {
 			double *tmp = ALLOCA(double, chunkSize);
 			uint32_t nChunks = n / chunkSize;
 			Assert((n % chunkSize) == 0);
-			float scales[3] = { 1.f / 1500.f,
-								1.15f / 1500.f,
-								1.66f / 1500.f };
-			for (int c = 0; c < 3; ++c) {
+			float scales[3] = { 1.f / 1500.f, 1.15f / 1500.f, 1.66f / 1500.f };
+			for (int c = 0; c < 3; ++c)
+			{
 				int offset = 0;
-				for (uint32_t i = 0; i < nChunks; ++i) {
-					if (fread(tmp, sizeof(double), chunkSize, f) !=
-						chunkSize) {
-						Error("Premature end-of-file in measured BRDF "
-							"data file \"%s\"",
-							fName.c_str());
+				for (uint32_t i = 0; i < nChunks; ++i)
+				{
+					if (fread(tmp, sizeof(double), chunkSize, f) != chunkSize)
+					{
+						Error("Premature end-of-file in measured BRDF " "data file \"%s\"", fName.c_str());
 						delete[] regularHalfangleData;
 						regularHalfangleData = NULL;
 						fclose(f);
 						return;
 					}
-					for (uint32_t j = 0; j < chunkSize; ++j) {
-						regularHalfangleData[3 * offset++ + c] =
-							max(0., tmp[j] * scales[c]);
+					for (uint32_t j = 0; j < chunkSize; ++j)
+					{
+						regularHalfangleData[3 * offset++ + c] = max(0., tmp[j] * scales[c]);
 					}
 				}
 			}
@@ -220,10 +216,11 @@ namespace pbrt {
 			int margSum = 0;
 			int condSum = 0;
 			Distribution2DAdaptive *temp;
-			for (uint32_t i = 0; i < mThetaO; i++) {
-				for (uint32_t j = 0; j < mPhiO; j++) {
-					temp = new Distribution2DAdaptive(
-						&ohHalfangleData[fSize*(j + i*mPhiO)],
+			for (uint32_t i = 0; i < mThetaO; i++)
+			{
+				for (uint32_t j = 0; j < mPhiO; j++)
+				{
+					temp = new Distribution2DAdaptive( &ohHalfangleData[fSize*(j + i*mPhiO)],
 						mPhiH, mThetaH, tp, mSize, mPDist, mRDist);
 					distribution.push_back(temp);
 					margSum += temp->getMargCount();
@@ -231,15 +228,13 @@ namespace pbrt {
 				}
 			}
 			loadedDistributionAdaptive[fName] = distribution;
-			printf("avg theta: %d \n",
-				int(margSum / float(mThetaO*mPhiO)));
-			printf("avg phi: %d \n",
-				int(condSum / float(mThetaO*mPhiO)));
+			printf("avg theta: %d \n", int(margSum / float(mThetaO*mPhiO)));
+			printf("avg phi: %d \n", int(condSum / float(mThetaO*mPhiO)));
 		}
 	}
 
-	void MeasuredAdaptiveMaterial::mapToViewHalfangle(float* tmpData,
-		float* finalData) {
+	void MeasuredAdaptiveMaterial::mapToViewHalfangle(float* tmpData, float* finalData)
+	{
 		int index = 0, ind;
 		double val, maxVal = 0.0;
 		for (uint32_t i = 0; i < mThetaO; i++) {
