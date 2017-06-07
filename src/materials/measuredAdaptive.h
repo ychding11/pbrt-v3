@@ -94,20 +94,21 @@ namespace pbrt {
 
 		}
 
+		// OVERRIDE
 		void ComputeScatteringFunctions(SurfaceInteraction *si, MemoryArena &arena, TransportMode mode,
 			bool allowMultipleLobes) const override;
-
-		//BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const;
+	private:
 		void mapToViewHalfangle(float *tmpData, float *finalData);
 		int lookup_brdf_val(float *brdf, double thetaOut, double phiOut, double thetaHalf, double phiHalf);
 
 	private:
 		// MeasuredAdaptiveMaterial Private Data
+		//uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
+		//uint32_t nThetaH, nThetaD, nPhiD;
+		const uint32_t nThetaH = 90, nThetaD = 90, nPhiD = 180,
+			mThetaO = 32, mPhiO = 16, mThetaH = 256, mPhiH = 32;
 		float *regularHalfangleData;
-		uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
-		uint32_t nThetaH, nThetaD, nPhiD;
 		vector<Distribution2DAdaptive *> distribution;
-		//Reference<Texture<float> > bumpMap;
 		std::shared_ptr<Texture<Float>> bumpMap;
 	};
 

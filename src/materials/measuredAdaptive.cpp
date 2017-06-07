@@ -163,8 +163,8 @@ namespace pbrt {
 		else
 		{
 			// Load RegularHalfangle BRDF Data
-			nThetaH = 90; nThetaD = 90; nPhiD = 180;
-			mThetaO = 32; mPhiO = 16; mThetaH = 256; mPhiH = 32;
+			//nThetaH = 90; nThetaD = 90; nPhiD = 180;
+			//mThetaO = 32; mPhiO = 16; mThetaH = 256; mPhiH = 32;
 
 			if (loadedRegularHalfangleAdaptive.find(fName) != loadedRegularHalfangleAdaptive.end())
 			{
@@ -176,31 +176,34 @@ namespace pbrt {
 			FILE *f = fopen(fName.c_str(), "rb");
 			if (!f)
 			{
-				Error("Unable to open BRDF data file \"%s\"", fName.c_str());
+				//Error("Unable to open BRDF data file \"%s\"", fName.c_str());
+				LOG(ERROR) << StringPrintf("Unable to open BRDF data file \"%s\"", fName.c_str());
 				return;
 			}
 			int dims[3];
 			if (fread(dims, sizeof(int), 3, f) != 3)
 			{
-				Error("Premature end-of-file in measured BRDF data file \"%s\"", fName.c_str());
+				//Error("Premature end-of-file in measured BRDF data file \"%s\"", fName.c_str());
+				LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF data file \"%s\"", fName.c_str());
 				fclose(f);
 				return;
 			}
 			uint32_t n = dims[0] * dims[1] * dims[2];
 			if (n != nThetaH * nThetaD * nPhiD)
 			{
-				Error("Dimensions don't match\n");
+				//Error("Dimensions don't match\n");
+				LOG(ERROR) << StringPrintf("Dimensions don't match\n");
 				fclose(f);
 				return;
 			}
 
 			regularHalfangleData = new float[3 * n];
 
-			const uint32_t chunkSize = 2 * nPhiD;
+			const uint32_t chunkSize = 2 * nPhiD; // 360
 			CHECK((n % chunkSize) == 0);
 			uint32_t nChunks = n / chunkSize;
 			double *tmp = ALLOCA(double, chunkSize);
-			float scales[3] = { 1.f / 1500.f, 1.15f / 1500.f, 1.66f / 1500.f };
+			const float scales[3] = { 1.f / 1500.f, 1.15f / 1500.f, 1.66f / 1500.f };
 			for (int c = 0; c < 3; ++c)
 			{
 				int offset = 0;
@@ -208,7 +211,8 @@ namespace pbrt {
 				{
 					if (fread(tmp, sizeof(double), chunkSize, f) != chunkSize)
 					{
-						Error("Premature end-of-file in measured BRDF " "data file \"%s\"", fName.c_str());
+						//Error("Premature end-of-file in measured BRDF " "data file \"%s\"", fName.c_str());
+						LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF " "data file \"%s\"", fName.c_str());
 						delete[] regularHalfangleData;
 						regularHalfangleData = NULL;
 						fclose(f);
@@ -221,28 +225,28 @@ namespace pbrt {
 				}
 			}
 			loadedRegularHalfangleAdaptive[fName] = regularHalfangleData;
+			
 			uint32_t m = mPhiH * mThetaH * mPhiO * mThetaO;
 			float* ohHalfangleData = new float[m];
 			mapToViewHalfangle(regularHalfangleData, ohHalfangleData);
 			fclose(f);
+
 			uint32_t fSize = mThetaH * mPhiH;
-			int margSum = 0;
-			int condSum = 0;
-			Distribution2DAdaptive *temp;
+			int margSum = 0, condSum = 0;
 			for (uint32_t i = 0; i < mThetaO; i++)
 			{
 				for (uint32_t j = 0; j < mPhiO; j++)
 				{
-					temp = new Distribution2DAdaptive( &ohHalfangleData[fSize*(j + i*mPhiO)],
-						mPhiH, mThetaH, tp, mSize, mPDist, mRDist);
+					Distribution2DAdaptive *temp = new Distribution2DAdaptive( &ohHalfangleData[fSize*(j + i*mPhiO)],
+														mPhiH, mThetaH, tp, mSize, mPDist, mRDist);
 					distribution.push_back(temp);
 					margSum += temp->getMargCount();
 					condSum += temp->getCondCount();
 				}
 			}
 			loadedDistributionAdaptive[fName] = distribution;
-			printf("avg theta: %d \n", int(margSum / float(mThetaO*mPhiO)));
-			printf("avg phi: %d \n", int(condSum / float(mThetaO*mPhiO)));
+			printf("avg theta: %d \n", int(margSum / float(mThetaO * mPhiO)) );
+			printf("avg phi: %d \n", int(condSum / float(mThetaO * mPhiO)) );
 		}
 	}
 
@@ -302,8 +306,10 @@ namespace pbrt {
 		wi = Normalize(wi);
 
 		float whTheta = SphericalTheta(wh);
-		float whCosPhi = CosPhi(wh), whSinPhi = SinPhi(wh);
-		float whCosTheta = CosTheta(wh), whSinTheta = SinTheta(wh);
+		float whCosPhi = CosPhi(wh),
+			  whSinPhi = SinPhi(wh);
+		float whCosTheta = CosTheta(wh),
+			  whSinTheta = SinTheta(wh);
 		Vector whx(whCosPhi * whCosTheta, whSinPhi * whCosTheta, -whSinTheta);
 		Vector why(-whSinPhi, whCosPhi, 0);
 		Vector wd(Dot(wi, whx), Dot(wi, why), Dot(wi, wh));
@@ -315,9 +321,11 @@ namespace pbrt {
 		// Compute indices _whThetaIndex_, _wdThetaIndex_, _wdPhiIndex_
 #define REMAP(V, MAX, COUNT) \
         Clamp(int((V) / (MAX) * (COUNT)), 0, (COUNT)-1)
+
 		int whThetaIndex = REMAP(sqrtf(max(0.f, whTheta / (M_PI / 2.f))), 1.f, nThetaH);
 		int wdThetaIndex = REMAP(wdTheta, M_PI / 2.f, nThetaD);
-		int wdPhiIndex = REMAP(wdPhi, M_PI, nPhiD);
+		int wdPhiIndex   = REMAP(wdPhi, M_PI, nPhiD);
+
 #undef REMAP
 
 		return wdPhiIndex + nPhiD * (wdThetaIndex + whThetaIndex * nThetaD);

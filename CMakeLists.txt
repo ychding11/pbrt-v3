@@ -284,6 +284,9 @@ TARGET_LINK_LIBRARIES ( pbrt_exe
   )
 
 # Tools
+ADD_EXECUTABLE ( bsdfreader
+	src/BRDFReader/BRDFRead.cpp
+  )
 ADD_EXECUTABLE ( bsdftest
   src/tools/bsdftest.cpp
   )
