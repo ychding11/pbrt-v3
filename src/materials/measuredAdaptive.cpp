@@ -156,99 +156,15 @@ namespace pbrt {
 		: bumpMap(bump)
 		, regularHalfangleData(nullptr)
 	{
-		const char *suffix = strrchr(fName.c_str(), '.');
-		if (!suffix)
+		if (sLoadedRegularHalfAngleAdaptive.find(fName) != sLoadedRegularHalfAngleAdaptive.end())
 		{
-			//Error("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", fName.c_str());
-			LOG(ERROR) << StringPrintf("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", fName.c_str());
+			regularHalfangleData = sLoadedRegularHalfAngleAdaptive[fName];
+			distribution = sLoadedDistributionAdaptive[fName];
+			return;
 		}
 		else
 		{
-			// Load RegularHalfangle BRDF Data
-			//nThetaH = 90; nThetaD = 90; nPhiD = 180;
-			//mThetaO = 32; mPhiO = 16; mThetaH = 256; mPhiH = 32;
-
-			if (sLoadedRegularHalfAngleAdaptive.find(fName) != sLoadedRegularHalfAngleAdaptive.end())
-			{
-				regularHalfangleData = sLoadedRegularHalfAngleAdaptive[fName];
-				distribution = sLoadedDistributionAdaptive[fName];
-				return;
-			}
-
-			FILE *f = fopen(fName.c_str(), "rb");
-			if (!f)
-			{
-				//Error("Unable to open BRDF data file \"%s\"", fName.c_str());
-				LOG(ERROR) << StringPrintf("Unable to open BRDF data file \"%s\"", fName.c_str());
-				return;
-			}
-			int dims[3];
-			if (fread(dims, sizeof(int), 3, f) != 3)
-			{
-				//Error("Premature end-of-file in measured BRDF data file \"%s\"", fName.c_str());
-				LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF data file \"%s\"", fName.c_str());
-				fclose(f);
-				return;
-			}
-			uint32_t n = dims[0] * dims[1] * dims[2];
-			if (n != nThetaH * nThetaD * nPhiD)
-			{
-				//Error("Dimensions don't match\n");
-				LOG(ERROR) << StringPrintf("Dimensions don't match\n");
-				fclose(f);
-				return;
-			}
-
-			regularHalfangleData = new float[3 * n];
-
-			const uint32_t chunkSize = 2 * nPhiD; // 360
-			CHECK((n % chunkSize) == 0);
-			uint32_t nChunks = n / chunkSize;
-			double *tmp = ALLOCA(double, chunkSize);
-			const float scales[3] = { 1.f / 1500.f, 1.15f / 1500.f, 1.66f / 1500.f };
-			for (int c = 0; c < 3; ++c)
-			{
-				int offset = 0;
-				for (uint32_t i = 0; i < nChunks; ++i)
-				{
-					if (fread(tmp, sizeof(double), chunkSize, f) != chunkSize)
-					{
-						//Error("Premature end-of-file in measured BRDF " "data file \"%s\"", fName.c_str());
-						LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF " "data file \"%s\"", fName.c_str());
-						delete[] regularHalfangleData;
-						regularHalfangleData = NULL;
-						fclose(f);
-						return;
-					}
-					for (uint32_t j = 0; j < chunkSize; ++j)
-					{
-						regularHalfangleData[3 * offset++ + c] = max(0., tmp[j] * scales[c]);
-					}
-				}
-			}
-			sLoadedRegularHalfAngleAdaptive[fName] = regularHalfangleData;
-			
-			uint32_t m = mPhiH * mThetaH * mPhiO * mThetaO;
-			float* ohHalfangleData = new float[m];
-			mapToViewHalfangle(regularHalfangleData, ohHalfangleData);
-			fclose(f);
-
-			uint32_t fSize = mThetaH * mPhiH;
-			int margSum = 0, condSum = 0;
-			for (uint32_t i = 0; i < mThetaO; i++)
-			{
-				for (uint32_t j = 0; j < mPhiO; j++)
-				{
-					Distribution2DAdaptive *temp = new Distribution2DAdaptive( &ohHalfangleData[fSize*(j + i*mPhiO)],
-														mPhiH, mThetaH, tp, mSize, mPDist, mRDist);
-					distribution.push_back(temp);
-					margSum += temp->getMargCount();
-					condSum += temp->getCondCount();
-				}
-			}
-			sLoadedDistributionAdaptive[fName] = distribution;
-			printf("avg theta: %d \n", int(margSum / float(mThetaO * mPhiO)) );
-			printf("avg phi: %d \n", int(condSum / float(mThetaO * mPhiO)) );
+			loadAndAnalyzeBRDF(fName, tp, mSize, mPDist, mRDist);
 		}
 	}
 
@@ -414,21 +330,6 @@ namespace pbrt {
 		return wdPhiIndex + nPhiD * (wdThetaIndex + whThetaIndex * nThetaD);
 	}
 
-#if 0
-	BSDF *MeasuredAdaptiveMaterial::GetBSDF( const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const
-	{
-		// Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
-		DifferentialGeometry dgs;
-		if (bumpMap)
-			Bump(bumpMap, dgGeom, dgShading, &dgs);
-		else
-			dgs = dgShading;
-		BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
-		if (regularHalfangleData)
-			bsdf->Add(BSDF_ALLOC(arena, AdaptiveHalfangleBRDF) (regularHalfangleData, nThetaH, nThetaD, nPhiD, mThetaO, mPhiO, mThetaH, mPhiH, distribution));
-		return bsdf;
-	}
-#endif
 
 	void MeasuredAdaptiveMaterial::ComputeScatteringFunctions(SurfaceInteraction *si, MemoryArena &arena,
 		TransportMode mode,
