@@ -44,6 +44,7 @@
 //#include "kdtree.h"
 
 #include <vector>
+#include <map>
 
 namespace pbrt {
 
@@ -110,6 +111,11 @@ namespace pbrt {
 		float *regularHalfangleData;
 		vector<Distribution2DAdaptive *> distribution;
 		std::shared_ptr<Texture<Float>> bumpMap;
+
+	public:
+		// Class member
+		static std::map<string, float *> sLoadedRegularHalfAngleAdaptive;
+		static std::map<string, vector <Distribution2DAdaptive*> > sLoadedDistributionAdaptive;
 	};
 
 	MeasuredAdaptiveMaterial* CreateMeasuredAdaptiveMaterial(const TextureParams &mp);

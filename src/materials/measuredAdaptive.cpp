@@ -146,30 +146,32 @@ namespace pbrt {
 		return std::string("[AdaptiveHalfangleBRDF]");
 	}
 
-	// MeasuredAdaptiveMaterial Method Definitions
-	static map<string, float *> loadedRegularHalfangleAdaptive;
-	static map<string, vector <Distribution2DAdaptive *> > loadedDistributionAdaptive;
+	// initialize static member
+	map<string, float*> MeasuredAdaptiveMaterial::sLoadedRegularHalfAngleAdaptive;
+	map<string, vector <Distribution2DAdaptive*> > MeasuredAdaptiveMaterial::sLoadedDistributionAdaptive;
 
+	// MeasuredAdaptiveMaterial Method Definitions
 	MeasuredAdaptiveMaterial::MeasuredAdaptiveMaterial( const string &fName,
 		const std::shared_ptr<Texture<float> > &bump, int tp, int mSize, float mPDist, float mRDist)
 		: bumpMap(bump)
 		, regularHalfangleData(nullptr)
 	{
-		//bumpMap = bump;
-		//regularHalfangleData = NULL;
 		const char *suffix = strrchr(fName.c_str(), '.');
 		if (!suffix)
-			Error("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", fName.c_str());
+		{
+			//Error("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", fName.c_str());
+			LOG(ERROR) << StringPrintf("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", fName.c_str());
+		}
 		else
 		{
 			// Load RegularHalfangle BRDF Data
 			//nThetaH = 90; nThetaD = 90; nPhiD = 180;
 			//mThetaO = 32; mPhiO = 16; mThetaH = 256; mPhiH = 32;
 
-			if (loadedRegularHalfangleAdaptive.find(fName) != loadedRegularHalfangleAdaptive.end())
+			if (sLoadedRegularHalfAngleAdaptive.find(fName) != sLoadedRegularHalfAngleAdaptive.end())
 			{
-				regularHalfangleData = loadedRegularHalfangleAdaptive[fName];
-				distribution = loadedDistributionAdaptive[fName];
+				regularHalfangleData = sLoadedRegularHalfAngleAdaptive[fName];
+				distribution = sLoadedDistributionAdaptive[fName];
 				return;
 			}
 
@@ -224,7 +226,7 @@ namespace pbrt {
 					}
 				}
 			}
-			loadedRegularHalfangleAdaptive[fName] = regularHalfangleData;
+			sLoadedRegularHalfAngleAdaptive[fName] = regularHalfangleData;
 			
 			uint32_t m = mPhiH * mThetaH * mPhiO * mThetaO;
 			float* ohHalfangleData = new float[m];
@@ -244,7 +246,7 @@ namespace pbrt {
 					condSum += temp->getCondCount();
 				}
 			}
-			loadedDistributionAdaptive[fName] = distribution;
+			sLoadedDistributionAdaptive[fName] = distribution;
 			printf("avg theta: %d \n", int(margSum / float(mThetaO * mPhiO)) );
 			printf("avg phi: %d \n", int(condSum / float(mThetaO * mPhiO)) );
 		}
