@@ -37,7 +37,7 @@
 
 namespace pbrt {
 
-	AdaptiveHalfangleBRDF::AdaptiveHalfangleBRDF(float *d,
+	AdaptiveHalfangleBRDF::AdaptiveHalfangleBRDF(const std::shared_ptr<float> &d,
 		uint32_t nth, uint32_t ntd, uint32_t npd,
 		uint32_t mto, uint32_t mpo, uint32_t mth,
 		uint32_t mph,
@@ -81,7 +81,7 @@ namespace pbrt {
 #undef REMAP
 
 		int index = wdPhiIndex + nPhiD * (wdThetaIndex + whThetaIndex * nThetaD);
-		return Spectrum::FromRGB(&brdf[3 * index]);
+		return Spectrum::FromRGB(&(brdf.get()[3 * index]));
 	}
 
 	Spectrum AdaptiveHalfangleBRDF::Sample_f(const Vector &wo, Vector *wi, const Point2f &sample, float *pdf, BxDFType *sampledType) const
@@ -147,18 +147,17 @@ namespace pbrt {
 	}
 
 	// initialize static member
-	map<string, float*> MeasuredAdaptiveMaterial::sLoadedRegularHalfAngleAdaptive;
+	map<string, std::shared_ptr<float>> MeasuredAdaptiveMaterial::sLoadedRegularHalfAngleAdaptive;
 	map<string, vector <Distribution2DAdaptive*> > MeasuredAdaptiveMaterial::sLoadedDistributionAdaptive;
 
 	// MeasuredAdaptiveMaterial Method Definitions
 	MeasuredAdaptiveMaterial::MeasuredAdaptiveMaterial( const string &fName,
 		const std::shared_ptr<Texture<float> > &bump, int tp, int mSize, float mPDist, float mRDist)
 		: bumpMap(bump)
-		, regularHalfangleData(nullptr)
 	{
 		if (sLoadedRegularHalfAngleAdaptive.find(fName) != sLoadedRegularHalfAngleAdaptive.end())
 		{
-			regularHalfangleData = sLoadedRegularHalfAngleAdaptive[fName];
+			regularHalfAngleData = sLoadedRegularHalfAngleAdaptive[fName];
 			distribution = sLoadedDistributionAdaptive[fName];
 			return;
 		}
@@ -198,11 +197,11 @@ namespace pbrt {
 				return;
 			}
 
-			regularHalfangleData = new float[3 * n];
+			regularHalfAngleData.reset( new float[3 * n]);
 
 			const uint32_t chunkSize = 2 * nPhiD; // 360
 			CHECK((n % chunkSize) == 0);
-			uint32_t nChunks = n / chunkSize;
+			const uint32_t nChunks = n / chunkSize;
 			double *tmp = ALLOCA(double, chunkSize);
 			const float scales[3] = { 1.f / 1500.f, 1.15f / 1500.f, 1.66f / 1500.f };
 			for (int c = 0; c < 3; ++c)
@@ -213,22 +212,20 @@ namespace pbrt {
 					if (fread(tmp, sizeof(double), chunkSize, f) != chunkSize)
 					{
 						LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF " "data file \"%s\"", filename.c_str());
-						delete[] regularHalfangleData;
-						regularHalfangleData = NULL;
 						fclose(f);
 						return;
 					}
 					for (uint32_t j = 0; j < chunkSize; ++j)
 					{
-						regularHalfangleData[3 * offset++ + c] = max(0., tmp[j] * scales[c]);
+						regularHalfAngleData.get()[3 * offset++ + c] = max(0., tmp[j] * scales[c]);
 					}
 				}
 			}
-			sLoadedRegularHalfAngleAdaptive[filename] = regularHalfangleData;
+			sLoadedRegularHalfAngleAdaptive[filename] = regularHalfAngleData;
 			
 			uint32_t m = mPhiH * mThetaH * mPhiO * mThetaO;
 			float* ohHalfangleData = new float[m];
-			mapToViewHalfangle(regularHalfangleData, ohHalfangleData);
+			mapToViewHalfangle(regularHalfAngleData.get(), ohHalfangleData);
 			fclose(f);
 
 			uint32_t fSize = mThetaH * mPhiH;
@@ -252,7 +249,6 @@ namespace pbrt {
 	void MeasuredAdaptiveMaterial::mapToViewHalfangle(float* tmpData, float* finalData)
 	{
 		int index = 0, ind;
-		double val, maxVal = 0.0;
 		for (uint32_t i = 0; i < mThetaO; i++)
 		{
 			double thetaOut = i * 0.5 * M_PI / mThetaO;
@@ -266,11 +262,8 @@ namespace pbrt {
 					{
 						double phiHalf = l * 2 * M_PI / mPhiH;
 						ind = lookup_brdf_val(tmpData, thetaOut, phiOut, thetaHalf, phiHalf);
-						val = tmpData[ind] + tmpData[ind + 1] + tmpData[ind + 2];
-						finalData[index] = val;
-						if (val > maxVal)
-							maxVal = val;
-						index++;
+						double val = tmpData[ind] + tmpData[ind + 1] + tmpData[ind + 2];
+						finalData[index++] = val;
 					}
 				}
 			}
@@ -337,8 +330,8 @@ namespace pbrt {
 	{
 		if (bumpMap) Bump(bumpMap, si);
 		si->bsdf = ARENA_ALLOC(arena, BSDF)(*si);
-		if (regularHalfangleData)
-			si->bsdf->Add(ARENA_ALLOC(arena, AdaptiveHalfangleBRDF)(regularHalfangleData, nThetaH, nThetaD, nPhiD, mThetaO, mPhiO, mThetaH, mPhiH, distribution));
+		if (regularHalfAngleData)
+			si->bsdf->Add(ARENA_ALLOC(arena, AdaptiveHalfangleBRDF)(regularHalfAngleData, nThetaH, nThetaD, nPhiD, mThetaO, mPhiO, mThetaH, mPhiH, distribution));
 	}
 
 	MeasuredAdaptiveMaterial *CreateMeasuredAdaptiveMaterial( const TextureParams &mp)

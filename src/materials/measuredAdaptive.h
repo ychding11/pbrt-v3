@@ -57,14 +57,14 @@ namespace pbrt {
 		typedef Vector3<Float> Vector;
 
 	public:
-		AdaptiveHalfangleBRDF(float *d,
+		AdaptiveHalfangleBRDF(const std::shared_ptr<float> &d,
 			uint32_t nth, uint32_t ntd, uint32_t npd,
 			uint32_t mto, uint32_t mpo, uint32_t mth,
 			uint32_t mph, vector<Distribution2DAdaptive*> dist);
 
 		~AdaptiveHalfangleBRDF()
 		{
-			if (brdf) delete[] brdf;
+			//if (brdf) delete[] brdf;
 			for (uint32_t i = 0; i < distribution.size(); ++i)
 				if (distribution[i]) delete distribution[i];
 		}
@@ -73,7 +73,7 @@ namespace pbrt {
 		float Pdf(const Vector &wi, const Vector &wo) const override;
 		std::string ToString() const override;
 
-		float *brdf;
+		const std::shared_ptr<float> brdf;
 		uint32_t nThetaH, nThetaD, nPhiD;
 		uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
 		vector<Distribution2DAdaptive* > distribution;
@@ -89,7 +89,7 @@ namespace pbrt {
 			int mSize, float mPDist, float mRDist);
 		~MeasuredAdaptiveMaterial()
 		{
-			if (regularHalfangleData) delete[]regularHalfangleData;
+			//if (regularHalfangleData) delete[]regularHalfangleData;
 			for (uint32_t i = 0; i < distribution.size(); ++i)
 				if (distribution[i]) delete distribution[i];
 
@@ -105,17 +105,16 @@ namespace pbrt {
 
 	private:
 		// MeasuredAdaptiveMaterial Private Data
-		//uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
-		//uint32_t nThetaH, nThetaD, nPhiD;
 		const uint32_t nThetaH = 90, nThetaD = 90, nPhiD = 180,
 			mThetaO = 32, mPhiO = 16, mThetaH = 256, mPhiH = 32;
-		float *regularHalfangleData;
+		//float *regularHalfangleData;
+		std::shared_ptr<float> regularHalfAngleData;
 		vector<Distribution2DAdaptive *> distribution;
 		std::shared_ptr<Texture<Float>> bumpMap;
 
 	public:
 		// Class member
-		static std::map<string, float *> sLoadedRegularHalfAngleAdaptive;
+		static std::map<string, std::shared_ptr<float>> sLoadedRegularHalfAngleAdaptive;
 		static std::map<string, vector <Distribution2DAdaptive*> > sLoadedDistributionAdaptive;
 	};
 
