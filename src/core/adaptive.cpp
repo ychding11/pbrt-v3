@@ -310,21 +310,15 @@ namespace pbrt {
 	void CDFAdaptive::printfCdfAdap()
 	{
 		auto it = cdf.begin(), nextIt = cdf.begin();
-		//nextIt++;
 		for (nextIt++; nextIt != cdf.end(); it++, nextIt++)
 			printf("%d, %f -> %d, %f\n", it->fst, it->snd, nextIt->fst, nextIt->snd);
 
 	}
 
-	//void CDFAdaptive::toArrays(float *cdfVal, int *cdfIndex)
 	void CDFAdaptive::toArrays(std::vector<float>& cdfVal, std::vector<int>& cdfIndex)
 	{
-		//set<pair<int, float> >::iterator it;
 		for (auto it = cdf.begin(); it != cdf.end(); it++)
 		{
-			//cdfVal[i] = it->snd;
-			//cdfIndex[i] = it->fst;
-			//i++;
 			cdfIndex.push_back(it->first);
 			cdfVal.push_back(it->second);
 		}
@@ -333,18 +327,13 @@ namespace pbrt {
 	void CDFAdaptive::updateFunc(const std::vector<float>&f, std::vector<float>&func)
 	{
 		auto it = cdf.begin(), nextIt = cdf.begin();
-		int index1, index2, n;
 		for ( nextIt++; nextIt != cdf.end(); it++, nextIt++)
 		{
-			index1 = it->fst;
-			index2 = nextIt->fst;
-			n = index2 - index1;
+			int index1 = it->fst, index2 = nextIt->fst,
+				n = index2 - index1;
 			float sumFunc = 0.0;
-			FOR(j, index1, index2 - 1)
-			{
-				sumFunc += f[j];
-			}
-			//func[i++] = sumFunc / n;
+			for (int i = index1; i < index2; ++i)
+				sumFunc += f[i];
 			func.push_back(sumFunc / n);
 		}
 	}
