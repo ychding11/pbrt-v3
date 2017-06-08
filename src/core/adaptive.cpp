@@ -340,30 +340,37 @@ namespace pbrt {
 
 	Distribution1DAdaptive::Distribution1DAdaptive(const float *f, int n, int type, int maxSize, float minPDist, float minRDist)
 	{
+		CHECK(f);
 		Distribution1D dist(f, n);
-		CDFAdaptive cdfAdaptive(&(dist.cdf[0]), dist.Count(), type, maxSize, minPDist, minRDist);
-		adaptiveCount = cdfAdaptive.count;
-		uniformCount = dist.Count();
+		uniformCount = dist.cdf.size();
 		funcInt = dist.funcInt;
+
+		CDFAdaptive cdfAdaptive(&(dist.cdf[0]), dist.cdf.size(), type, maxSize, minPDist, minRDist);
+		adaptiveCount = cdfAdaptive.count;
+
 		func.reserve(adaptiveCount);
 		cdf.reserve(adaptiveCount);
 		index.reserve(adaptiveCount);
+
 		cdfAdaptive.toArrays(cdf, index);
 		cdfAdaptive.updateFunc(dist.func, func);
 	}
 
 	Distribution1DAdaptive::Distribution1DAdaptive(Distribution1D *dist, int type, int maxSize, float minPDist, float minRDist)
 	{
-		CDFAdaptive cdfAdaptive(&(dist->cdf[0]), dist->Count(), type, maxSize, minPDist, minRDist);
-		adaptiveCount = cdfAdaptive.count;
-		uniformCount = dist->Count();
+		CHECK(dist);
+		uniformCount = dist->cdf.size();
 		funcInt = dist->funcInt;
+		CDFAdaptive cdfAdaptive(&(dist->cdf[0]), dist->cdf.size(), type, maxSize, minPDist, minRDist);
+		adaptiveCount = cdfAdaptive.count;
+
 		func.reserve(adaptiveCount);
 		cdf.reserve(adaptiveCount);
 		index.reserve(adaptiveCount);
+
 		cdfAdaptive.toArrays(cdf, index);
 		cdfAdaptive.updateFunc(dist->func, func);
-	}
+	} 
 
 	float Distribution1DAdaptive::SampleContinuous(float u, float *pdf, int *off = NULL)
 	{
