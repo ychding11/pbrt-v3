@@ -252,6 +252,87 @@ namespace pbrt {
 		}
 	}
 
+	void MeasuredAdaptiveMaterial::loadAndAnalyzeBRDF(const string &filename, int tp, int mSize, float mPDist, float mRDist)
+	{
+		const char *suffix = strrchr(filename.c_str(), '.');
+		if (!suffix)
+		{
+			LOG(ERROR) << StringPrintf("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", filename.c_str());
+		}
+		else
+		{
+			FILE *f = fopen(filename.c_str(), "rb");
+			if (!f)
+			{
+				LOG(ERROR) << StringPrintf("Unable to open BRDF data file \"%s\"", filename.c_str());
+				return;
+			}
+			int dims[3];
+			if (fread(dims, sizeof(int), 3, f) != 3)
+			{
+				LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF data file \"%s\"", filename.c_str());
+				fclose(f);
+				return;
+			}
+			uint32_t n = dims[0] * dims[1] * dims[2];
+			if (n != nThetaH * nThetaD * nPhiD)
+			{
+				LOG(ERROR) << StringPrintf("Dimensions don't match\n");
+				fclose(f);
+				return;
+			}
+
+			regularHalfangleData = new float[3 * n];
+
+			const uint32_t chunkSize = 2 * nPhiD; // 360
+			CHECK((n % chunkSize) == 0);
+			uint32_t nChunks = n / chunkSize;
+			double *tmp = ALLOCA(double, chunkSize);
+			const float scales[3] = { 1.f / 1500.f, 1.15f / 1500.f, 1.66f / 1500.f };
+			for (int c = 0; c < 3; ++c)
+			{
+				int offset = 0;
+				for (uint32_t i = 0; i < nChunks; ++i)
+				{
+					if (fread(tmp, sizeof(double), chunkSize, f) != chunkSize)
+					{
+						LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF " "data file \"%s\"", filename.c_str());
+						delete[] regularHalfangleData;
+						regularHalfangleData = NULL;
+						fclose(f);
+						return;
+					}
+					for (uint32_t j = 0; j < chunkSize; ++j)
+					{
+						regularHalfangleData[3 * offset++ + c] = max(0., tmp[j] * scales[c]);
+					}
+				}
+			}
+			sLoadedRegularHalfAngleAdaptive[filename] = regularHalfangleData;
+			
+			uint32_t m = mPhiH * mThetaH * mPhiO * mThetaO;
+			float* ohHalfangleData = new float[m];
+			mapToViewHalfangle(regularHalfangleData, ohHalfangleData);
+			fclose(f);
+
+			uint32_t fSize = mThetaH * mPhiH;
+			int margSum = 0, condSum = 0;
+			for (uint32_t i = 0; i < mThetaO; i++)
+			{
+				for (uint32_t j = 0; j < mPhiO; j++)
+				{
+					Distribution2DAdaptive *temp = new Distribution2DAdaptive( &ohHalfangleData[fSize*(j + i*mPhiO)],
+														mPhiH, mThetaH, tp, mSize, mPDist, mRDist);
+					distribution.push_back(temp);
+					margSum += temp->getMargCount();
+					condSum += temp->getCondCount();
+				}
+			}
+			sLoadedDistributionAdaptive[filename] = distribution;
+			printf("avg theta: %d \n", int(margSum / float(mThetaO * mPhiO)) );
+			printf("avg phi: %d \n", int(condSum / float(mThetaO * mPhiO)) );
+		}
+	}
 	void MeasuredAdaptiveMaterial::mapToViewHalfangle(float* tmpData, float* finalData)
 	{
 		int index = 0, ind;
