@@ -1,7 +1,7 @@
 LookAt 0 .26 .45    0 .1 0   0 1 0
 Rotate 5 0 1 0 
 Camera "perspective" "float fov" [40]
-Film "image" "integer xresolution" [400] "integer yresolution" [400] "string filename" "adaptive-bunny.png"
+Film "image" "integer xresolution" [400] "integer yresolution" [360] "string filename" "adaptive-bunny.png"
 
 
 WorldBegin

@@ -40,36 +40,33 @@ namespace pbrt {
 	{
 		cdf.insert(mp(0, f[0]));
 		cdf.insert(mp(n, f[n]));
-		float maxDist = 0, dist = 0;
 		count = 2;
-		set<pair<int, float> >::iterator it, nextIt;
+		float maxDist = 0., dist = 0.;
+		//set<pair<int, float> >::iterator it, nextIt;
 		int ind = 0;
 		do {
-			it = cdf.begin();
-			nextIt = cdf.begin();
-			nextIt++;
-			maxDist = -100;
-			for (; nextIt != cdf.end();
-				it++, nextIt++) {
-				FOR(i, (it->fst) + 1, (nextIt->fst) - 1) {
-					dist = calcDistance(
-						mp(it->fst, it->snd*MULT),
-						mp(nextIt->fst, nextIt->snd*MULT),
-						mp(i, f[i] * MULT));
-					if (dist > maxDist) {
-						maxDist = dist;
-						ind = i;
+			auto it = cdf.begin(), nextIt = cdf.begin();
+			for (maxDist = -100., nextIt++; nextIt != cdf.end(); it++, nextIt++)
+			{
+				FOR(i, (it->fst) + 1, (nextIt->fst) - 1)
+				{
+					dist = calcDistance( mp(it->fst, it->snd*MULT), mp(nextIt->fst, nextIt->snd*MULT), mp(i, f[i] * MULT));
+					if (dist > maxDist)
+					{
+						maxDist = dist; ind = i;
 					}
 				}
 			}
-			if (maxDist > minPDist) {
+			if (maxDist > minPDist)
+			{
 				cdf.insert(mp(ind, f[ind]));
-				count += 1;
+				count++;
 			}
 		} while (maxDist > minPDist && int(cdf.size()) < maxSize);
 	}
 
-	int CDFAdaptive::trianglArea(int i, int j, int k, const float *f) {
+	int CDFAdaptive::trianglArea(int i, int j, int k, const float *f)
+	{
 		Point a = Point(float(i), f[i], 1.0);
 		Point b = Point(float(j), f[j], 1.0);
 		Point c = Point(float(k), f[k], 1.0);
@@ -79,17 +76,21 @@ namespace pbrt {
 		return int(result.Length() * 0.5 * MULT);
 	}
 
-	void CDFAdaptive::VisvalingamWhyatt(const float *f, int n) {
+	void CDFAdaptive::VisvalingamWhyatt(const float *f, int n)
+	{
 		int numRemove = n - maxSize, minIndex, minArea, area;
 		vector<int> temp;
 		FOR(i, 0, n)
 			temp.pb(i);
-		FOR(i, 0, numRemove) {
+		FOR(i, 0, numRemove)
+		{
 			minIndex = 1;
 			minArea = trianglArea(temp[0], temp[1], temp[2], f);
-			FOR(j, 2, int(temp.size() - 2)) {
+			FOR(j, 2, int(temp.size() - 2))
+			{
 				area = trianglArea(temp[j - 1], temp[j], temp[j + 1], f);
-				if (area < minArea) {
+				if (area < minArea)
+				{
 					minArea = area;
 					minIndex = j;
 				}
@@ -99,49 +100,58 @@ namespace pbrt {
 
 		sort(temp.begin(), temp.end());
 
-		FOR(i, 0, maxSize - 1) {
+		FOR(i, 0, maxSize - 1)
+		{
 			cdf.insert(mp(temp[i], f[temp[i]]));
 			count++;
 		}
 	}
 
 
-	void CDFAdaptive::RadialDistance(const float *f, int n) {
+	void CDFAdaptive::RadialDistance(const float *f, int n)
+	{
 		int key = 0, test = 1;
 		cdf.insert(mp(key, f[key]));
 		count = 1;
 		float d;
-		while (key <= n) {
+		while (key <= n)
+		{
 			test = key + 1;
 			d = distance(key, test, f);
-			while (test < n && d < minRDist) {
+			while (test < n && d < minRDist)
+			{
 				test++;
 				d = distance(key, test, f);
 			}
 			key = test;
-			if (key <= n) {
+			if (key <= n)
+			{
 				cdf.insert(mp(key, f[key]));
 				count++;
 			}
 		}
 	}
 
-	void CDFAdaptive::PerpendicularDistance(const float *f, int n) {
+	void CDFAdaptive::PerpendicularDistance(const float *f, int n)
+	{
 		vector<int> temp;
 		FOR(i, 0, n)
 			temp.pb(i);
 		float dist;
-		FOR(i, 1, int(temp.size()) - 2) {
+		FOR(i, 1, int(temp.size()) - 2)
+		{
 			dist = calcDistance(
 				mp(i - 1, f[i - 1] * MULT),
 				mp(i + 1, f[i + 1] * MULT),
 				mp(i, f[i] * MULT));
-			if (dist < minPDist) {
+			if (dist < minPDist)
+			{
 				temp.erase(temp.begin() + i);
 				i--;
 			}
 		}
-		FOR(i, 0, int(temp.size() - 1)) {
+		FOR(i, 0, int(temp.size() - 1))
+		{
 			cdf.insert(mp(temp[i], f[temp[i]]));
 			count++;
 		}
@@ -255,13 +265,21 @@ namespace pbrt {
 
 	// Constructor
 	CDFAdaptive::CDFAdaptive(const float *f, int n, int tp, int mSize, float mDist, float mRDist)
+		: maxSize(mSize)
+		, minPDist(mDist)
+		, minRDist(mRDist)
+		, count(0)
 	{
+		CHECK(f != nullptr);
 		Compression type = Compression(tp);
+		/*
 		maxSize = mSize;
 		minPDist = mDist;
 		minRDist = mRDist;
 		count = 0;
-		switch (type) {
+		*/
+		switch (type)
+		{
 		case DP:
 			DouglasPeucker(f, n);
 			break;
@@ -282,6 +300,9 @@ namespace pbrt {
 			break;
 		case LA:
 			Lang(f, n);
+			break;
+		default:
+			LOG(ERROR) << StringPrintf("No such type.\n");
 			break;
 		}
 	}
@@ -406,8 +427,8 @@ namespace pbrt {
 	Distribution2DAdaptive::Distribution2DAdaptive(const float *data, int nu, int nv, int type, int maxSize, float minPDist, float minRDist)
 	{
 		Distribution2D dist(data, nu, nv);
-		pMarginal = new Distribution1DAdaptive(dist.pMarginal.get(), type, maxSize, minPDist, minRDist);
-		//Distribution1DAdaptive *temp;
+		pMarginal.reset( new Distribution1DAdaptive(dist.pMarginal.get(), type, maxSize, minPDist, minRDist));
+
 		float *func = new float[nu];
 		int na = pMarginal->adaptiveCount - 1;
 		int sum = 0;
@@ -424,9 +445,8 @@ namespace pbrt {
 				}
 				if (endIndex - startIndex > 0) func[i] /= endIndex - startIndex;
 			}
-			Distribution1DAdaptive *temp = new Distribution1DAdaptive(func, nu, type, maxSize, minPDist, minRDist);
-			pConditionalV.push_back(temp);
-			sum += (temp->adaptiveCount - 1);
+			pConditionalV.push_back( std::unique_ptr<Distribution1DAdaptive>(new Distribution1DAdaptive(func, nu, type, maxSize, minPDist, minRDist)));
+			sum += pConditionalV.back()->adaptiveCount - 1;
 		}
 		marginalCount = na;
 		conditionalCount = int(sum / float(na));
@@ -449,13 +469,6 @@ namespace pbrt {
 		return pdfV * pdfU;
 	}
 
-	Distribution2DAdaptive::~Distribution2DAdaptive()
-	{
-		//	if (pMarginal)
-		delete pMarginal;
-		for (uint32_t i = 0; i < pConditionalV.size(); ++i)
-			//		if(pConditionalV[i])
-			delete pConditionalV[i];
-	}
+//	Distribution2DAdaptive::~Distribution2DAdaptive() { }
 
 } //name space

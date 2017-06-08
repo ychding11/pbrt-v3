@@ -56,30 +56,31 @@ namespace pbrt {
 
 	using namespace std;
 
-struct CDFAdaptive {
-
+struct CDFAdaptive
+{
 	typedef Vector3<Float> Point;
 	typedef Vector3<Float> Vector;
 
-		CDFAdaptive(const float*cdf, int count, int type, int mSize, float mDist, float mRDist);
-		void printfCdfAdap();
-		void toArrays(std::vector<float>& cdfVal, std::vector<int>& cdfIndex);
-		void updateFunc(const std::vector<float>&f, std::vector<float>&func);
-
-			set< pair<int, float> > cdf;
-			int count;
-
+	CDFAdaptive(const float*cdf, int count, int type, int mSize, float mDist, float mRDist);
+	void printfCdfAdap(void);
+	void toArrays(std::vector<float>& cdfVal, std::vector<int>& cdfIndex);
+	void updateFunc(const std::vector<float>&f, std::vector<float>&func);
+		
+private:
 			int trianglArea(int i, int j, int k, const float *f);
 			void DouglasPeucker(const float *f, int n);
-			void VisvalingamWhyatt(const float *f, int n);
 			void RadialDistance(const float *f, int n);
-			void PerpendicularDistance(const float *f, int n);
 			void ReumannWitkam(const float *f, int n);
 			void Opheim(const float *f, int n);
 			void Lang(const float *f, int n);
+			void VisvalingamWhyatt(const float *f, int n);
+			void PerpendicularDistance(const float *f, int n);
+public:
+			int count;
 			int maxSize;
 			float minPDist;
 			float minRDist;
+			set< pair<int, float> > cdf;
 
 			float distance(int i, int j, const float *f)
 			{
@@ -88,7 +89,7 @@ struct CDFAdaptive {
 				Vector dist = a - b;
 				return floor(dist.Length() * MULT);
 			}
-	};
+};
 
 	// Monte Carlo Utility Declarations
 	struct Distribution1DAdaptive
@@ -109,24 +110,26 @@ struct CDFAdaptive {
 		std::vector<int> index;
 	};
 
-	struct Distribution2DAdaptive {
+	struct Distribution2DAdaptive
+	{
 		// Distribution2DAdaptive Public Methods
 		Distribution2DAdaptive(const float *data, int nu, int nv, int tp, int mSize, float mDist, float mRDist);
-		~Distribution2DAdaptive();
+		virtual ~Distribution2DAdaptive() {};
 		void SampleContinuous(float u0, float u1, float uv[2], float *pdf);
 		float Pdf(float u, float v);
 		int getMargCount() const { return marginalCount; };
 		int getCondCount() const { return conditionalCount; };
+
 	private:
 		// Distribution2DAdaptive Private Data
-		vector<Distribution1DAdaptive*> pConditionalV;
-		Distribution1DAdaptive *pMarginal;
+		vector<std::unique_ptr<Distribution1DAdaptive> > pConditionalV;
+		std::unique_ptr<Distribution1DAdaptive> pMarginal;
 		int marginalCount;
 		int conditionalCount;
 	};
 
-	inline float calcDistance(std::pair<int, float>p1, std::pair<int, float>p2,
-		std::pair<int, float>p) {
+	inline float calcDistance(std::pair<int, float>p1, std::pair<int, float>p2, std::pair<int, float>p)
+	{
 		float dist = fabs((p2.fst - p1.fst)*(p1.snd - p.snd)
 			- (p1.fst - p.fst)*(p2.snd - p1.snd));
 		return dist / sqrt((p2.fst - p1.fst)*(p2.fst - p1.fst)
