@@ -41,7 +41,7 @@ namespace pbrt {
 		uint32_t nth, uint32_t ntd, uint32_t npd,
 		uint32_t mto, uint32_t mpo, uint32_t mth,
 		uint32_t mph,
-		vector<Distribution2DAdaptive*> dist)
+		const std::vector<std::shared_ptr<Distribution2DAdaptive>> &dist)
 		: BxDF(BxDFType(BSDF_REFLECTION | BSDF_GLOSSY)),
 		brdf(d),
 		nThetaH(nth), nThetaD(ntd), nPhiD(npd),
@@ -148,7 +148,7 @@ namespace pbrt {
 
 	// initialize static member
 	map<string, std::shared_ptr<float>> MeasuredAdaptiveMaterial::sLoadedRegularHalfAngleAdaptive;
-	map<string, vector <Distribution2DAdaptive*> > MeasuredAdaptiveMaterial::sLoadedDistributionAdaptive;
+	map<string, std::vector<std::shared_ptr<Distribution2DAdaptive>> > MeasuredAdaptiveMaterial::sLoadedDistributionAdaptive;
 
 	// MeasuredAdaptiveMaterial Method Definitions
 	MeasuredAdaptiveMaterial::MeasuredAdaptiveMaterial( const string &fName,
@@ -236,11 +236,10 @@ namespace pbrt {
 			{
 				for (uint32_t j = 0; j < mPhiO; j++)
 				{
-					Distribution2DAdaptive *temp = new Distribution2DAdaptive( &radianHalfAngleData[stride * (j + i * mPhiO)],
-														mPhiH, mThetaH, tp, mSize, mPDist, mRDist);
-					distribution.push_back(temp);
-					margSum += temp->getMargCount();
-					condSum += temp->getCondCount();
+					distribution.emplace_back(new Distribution2DAdaptive(&radianHalfAngleData[stride * (j + i * mPhiO)],
+									mPhiH, mThetaH, tp, mSize, mPDist, mRDist));
+					margSum += distribution.back()->getMargCount();
+					condSum += distribution.back()->getCondCount();
 				}
 			}
 			sLoadedDistributionAdaptive[filename] = distribution;

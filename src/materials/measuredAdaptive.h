@@ -60,14 +60,10 @@ namespace pbrt {
 		AdaptiveHalfangleBRDF(const std::shared_ptr<float> &d,
 			uint32_t nth, uint32_t ntd, uint32_t npd,
 			uint32_t mto, uint32_t mpo, uint32_t mth,
-			uint32_t mph, vector<Distribution2DAdaptive*> dist);
+			uint32_t mph, 
+			const std::vector<std::shared_ptr<Distribution2DAdaptive> > &dist);
 
-		~AdaptiveHalfangleBRDF()
-		{
-			//if (brdf) delete[] brdf;
-			for (uint32_t i = 0; i < distribution.size(); ++i)
-				if (distribution[i]) delete distribution[i];
-		}
+		~AdaptiveHalfangleBRDF() {}
 
 		// override parent's function
 		Spectrum f(const Vector &wo, const Vector &wi) const override;
@@ -78,7 +74,7 @@ namespace pbrt {
 		const std::shared_ptr<float> brdf;
 		uint32_t nThetaH, nThetaD, nPhiD;
 		uint32_t mThetaO, mPhiO, mThetaH, mPhiH;
-		vector<Distribution2DAdaptive* > distribution;
+		const std::vector<std::shared_ptr<Distribution2DAdaptive> >  distribution;
 	};
 
 	// MeasuredAdaptiveMaterial Declarations
@@ -89,13 +85,7 @@ namespace pbrt {
 		// MeasuredAdaptiveMaterial Public Methods
 		MeasuredAdaptiveMaterial(const string &filename, const std::shared_ptr<Texture<float> >& bump, int type,
 			int mSize, float mPDist, float mRDist);
-		~MeasuredAdaptiveMaterial()
-		{
-			//if (regularHalfangleData) delete[]regularHalfangleData;
-			for (uint32_t i = 0; i < distribution.size(); ++i)
-				if (distribution[i]) delete distribution[i];
-
-		}
+		~MeasuredAdaptiveMaterial() {}
 
 		// OVERRIDE
 		void ComputeScatteringFunctions(SurfaceInteraction *si, MemoryArena &arena, TransportMode mode,
@@ -111,13 +101,13 @@ namespace pbrt {
 			mThetaO = 32, mPhiO = 16, mThetaH = 256, mPhiH = 32;
 		//float *regularHalfangleData;
 		std::shared_ptr<float> regularHalfAngleData;
-		vector<Distribution2DAdaptive *> distribution;
+		std::vector<std::shared_ptr<Distribution2DAdaptive> > distribution;
 		std::shared_ptr<Texture<Float>> bumpMap;
 
 	public:
 		// Class member
 		static std::map<string, std::shared_ptr<float>> sLoadedRegularHalfAngleAdaptive;
-		static std::map<string, vector <Distribution2DAdaptive*> > sLoadedDistributionAdaptive;
+		static std::map<string, std::vector<std::shared_ptr<Distribution2DAdaptive>> > sLoadedDistributionAdaptive;
 	};
 
 	MeasuredAdaptiveMaterial* CreateMeasuredAdaptiveMaterial(const TextureParams &mp);
