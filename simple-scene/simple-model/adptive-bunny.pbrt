@@ -14,9 +14,8 @@ WorldBegin
 	AttributeEnd
 
 	AttributeBegin
-		#Material "metal"   "float roughness" [.01] "spectrum eta" "spds/Au.eta.spd" "spectrum k" "spds/Au.k.spd"
 		Material "measuredAdaptive" "string brdffilename" "brdfs/nickel.binary"
-		#Scale 1.5 1.5 1.5
+		#Material "measuredAdaptive" "string brdffilename" "brdfs/gold-paint.binary"
 		Shape "plymesh" "string filename" "geometry/bunny.ply"
 	AttributeEnd
 

@@ -222,19 +222,21 @@ namespace pbrt {
 				}
 			}
 			sLoadedRegularHalfAngleAdaptive[filename] = regularHalfAngleData;
-			
-			uint32_t m = mPhiH * mThetaH * mPhiO * mThetaO;
-			float* ohHalfangleData = new float[m];
-			mapToViewHalfangle(regularHalfAngleData.get(), ohHalfangleData);
 			fclose(f);
+			
+			const uint32_t m = mPhiH * mThetaH * mPhiO * mThetaO;
+			const uint32_t stride = mThetaH * mPhiH;
 
-			uint32_t fSize = mThetaH * mPhiH;
+			//float* ohHalfangleData = new float[m];
+			std::vector<float> radianHalfAngleData(m);
+			mapToViewHalfangle(regularHalfAngleData.get(), &radianHalfAngleData[0]);
+
 			int margSum = 0, condSum = 0;
 			for (uint32_t i = 0; i < mThetaO; i++)
 			{
 				for (uint32_t j = 0; j < mPhiO; j++)
 				{
-					Distribution2DAdaptive *temp = new Distribution2DAdaptive( &ohHalfangleData[fSize*(j + i*mPhiO)],
+					Distribution2DAdaptive *temp = new Distribution2DAdaptive( &radianHalfAngleData[stride * (j + i * mPhiO)],
 														mPhiH, mThetaH, tp, mSize, mPDist, mRDist);
 					distribution.push_back(temp);
 					margSum += temp->getMargCount();

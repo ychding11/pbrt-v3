@@ -68,6 +68,8 @@ namespace pbrt {
 			for (uint32_t i = 0; i < distribution.size(); ++i)
 				if (distribution[i]) delete distribution[i];
 		}
+
+		// override parent's function
 		Spectrum f(const Vector &wo, const Vector &wi) const override;
 		Spectrum Sample_f(const Vector &wo, Vector *wi, const Point2f &sample, float *pdf, BxDFType *sampledType = nullptr) const override;
 		float Pdf(const Vector &wi, const Vector &wo) const override;

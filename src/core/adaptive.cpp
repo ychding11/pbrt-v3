@@ -38,8 +38,9 @@ namespace pbrt {
 
 	void CDFAdaptive::DouglasPeucker(const float *f, int n)
 	{
+		CHECK(n > 1);
 		cdf.insert(mp(0, f[0]));
-		cdf.insert(mp(n, f[n]));
+		cdf.insert(mp(n - 1, f[n - 1]));
 		count = 2;
 		float maxDist = 0., dist = 0.;
 		//set<pair<int, float> >::iterator it, nextIt;
