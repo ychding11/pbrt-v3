@@ -1,7 +1,9 @@
 overview
 ===============
 
-This code base is forked from xxx for study purpose. After reading PBRT book, I plan to do some extension to deepen my understanding.
+This code base is forked from https://github.com/mmp/pbrt-v3 for study purpose.
+After reading PBRT book, I plan to do some extension to deepen my understanding.
+
 I found an open source code repo in github: https://github.com/dnx4015/pbrt-importance-sampling
 It implement a new material in pbrt-v2 code. since pbrt-v2 and pbrt-v3 has many differences in design, I port the code to pbrt-v3 and hope 
 it can help me acquire a better understanding to pbrt-v3 code and book.  I will be very glad if this can help you too and feel free to use it.
