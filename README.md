@@ -23,7 +23,11 @@ modify code in ./src/core/coreapi.cpp add the following code.
 
 simple test scenes
 --------------
-The test scene needs nickel.binary in [MERL BRDF Database](http://people.csail.mit.edu/wojciech/BRDFDatabase/brdfs/)
+scene file location: simple-scene/simple-model/adptive-bunny.pbrt
+The test scene needs nickel.binary in [MERL BRDF Database](http://people.csail.mit.edu/wojciech/BRDFDatabase/brdfs/).
+So you need to download it and add it into  simple-scene/simple-model/brdfs.
+Then run the render command to get the result.
+![bunny](simple-scene/simple-model/adaptive-bunny.png "bunny")
 
 pbrt, Version 3
 ===============
