@@ -99,7 +99,6 @@ namespace pbrt {
 		// MeasuredAdaptiveMaterial Private Data
 		const uint32_t nThetaH = 90, nThetaD = 90, nPhiD = 180,
 			mThetaO = 32, mPhiO = 16, mThetaH = 256, mPhiH = 32;
-		//float *regularHalfangleData;
 		std::shared_ptr<float> regularHalfAngleData;
 		std::vector<std::shared_ptr<Distribution2DAdaptive> > distribution;
 		std::shared_ptr<Texture<Float>> bumpMap;

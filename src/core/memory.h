@@ -61,11 +61,14 @@ class
 alignas(PBRT_L1_CACHE_LINE_SIZE)
 #endif // PBRT_HAVE_ALIGNAS
     MemoryArena {
+
   public:
     // MemoryArena Public Methods
     // Constructor
     MemoryArena(size_t blockSize = 262144) : blockSize(blockSize) {}
-    ~MemoryArena() {
+
+    ~MemoryArena()
+	{
         FreeAligned(currentBlock);
         for (auto &block : usedBlocks) FreeAligned(block.second);
         for (auto &block : availableBlocks) FreeAligned(block.second);
@@ -76,10 +79,10 @@ alignas(PBRT_L1_CACHE_LINE_SIZE)
         // Round up _nBytes_ to minimum machine alignment
         nBytes = ((nBytes + 15) & (~15));
         if (currentBlockPos + nBytes > currentAllocSize)
-	{
+		{
             // Add current block to _usedBlocks_ list
             if (currentBlock)
-	    {
+			{
                 usedBlocks.push_back(std::make_pair(currentAllocSize, currentBlock));
                 currentBlock = nullptr;
                 currentAllocSize = 0;
@@ -88,9 +91,8 @@ alignas(PBRT_L1_CACHE_LINE_SIZE)
             // Get new block of memory for _MemoryArena_
 
             // Try to get memory block from _availableBlocks_
-            for (auto iter = availableBlocks.begin();
-                 iter != availableBlocks.end(); ++iter)
-	    {
+            for (auto iter = availableBlocks.begin(); iter != availableBlocks.end(); ++iter)
+			{
                 if (iter->first >= nBytes) {
                     currentAllocSize = iter->first;
                     currentBlock = iter->second;
@@ -98,7 +100,8 @@ alignas(PBRT_L1_CACHE_LINE_SIZE)
                     break;
                 }
             }
-            if (!currentBlock) {
+            if (!currentBlock)
+			{
                 currentAllocSize = std::max(nBytes, blockSize);
                 currentBlock = AllocAligned<uint8_t>(currentAllocSize);
             }
@@ -145,6 +148,7 @@ alignas(PBRT_L1_CACHE_LINE_SIZE)
 };
 
 // Template class.
+// See Page 1070 for detail
 template <typename T, int logBlockSize>
 class BlockedArray {
   public:

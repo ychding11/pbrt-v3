@@ -39,8 +39,7 @@ namespace pbrt {
 
 	AdaptiveHalfangleBRDF::AdaptiveHalfangleBRDF(const std::shared_ptr<float> &d,
 		uint32_t nth, uint32_t ntd, uint32_t npd,
-		uint32_t mto, uint32_t mpo, uint32_t mth,
-		uint32_t mph,
+		uint32_t mto, uint32_t mpo, uint32_t mth, uint32_t mph,
 		const std::vector<std::shared_ptr<Distribution2DAdaptive>> &dist)
 		: BxDF(BxDFType(BSDF_REFLECTION | BSDF_GLOSSY)),
 		brdf(d),
@@ -146,6 +145,7 @@ namespace pbrt {
 		return std::string("[AdaptiveHalfangleBRDF]");
 	}
 
+	// MeasuredAdaptiveMaterial class member
 	// initialize static member
 	map<string, std::shared_ptr<float>> MeasuredAdaptiveMaterial::sLoadedRegularHalfAngleAdaptive;
 	map<string, std::vector<std::shared_ptr<Distribution2DAdaptive>> > MeasuredAdaptiveMaterial::sLoadedDistributionAdaptive;
@@ -172,14 +172,14 @@ namespace pbrt {
 		const char *suffix = strrchr(filename.c_str(), '.');
 		if (!suffix)
 		{
-			LOG(ERROR) << StringPrintf("No suffix in measured BRDF filename \"%s\".  " "Can't determine file type (.brdf / .merl)", filename.c_str());
+			LOG(ERROR) << StringPrintf("Miss suffix in measured BRDF filename \"%s\".   Can't determine file type (.brdf/.merl)", filename.c_str());
 		}
 		else
 		{
 			FILE *f = fopen(filename.c_str(), "rb");
 			if (!f)
 			{
-				LOG(ERROR) << StringPrintf("Unable to open BRDF data file \"%s\"", filename.c_str());
+				LOG(ERROR) << StringPrintf("Unable to open BRDF data file \"%s\". ", filename.c_str());
 				return;
 			}
 			int dims[3];
@@ -192,14 +192,14 @@ namespace pbrt {
 			uint32_t n = dims[0] * dims[1] * dims[2];
 			if (n != nThetaH * nThetaD * nPhiD)
 			{
-				LOG(ERROR) << StringPrintf("Dimensions don't match\n");
+				LOG(ERROR) << StringPrintf("Dimensions of BRDF don't match.\n");
 				fclose(f);
 				return;
 			}
 
-			regularHalfAngleData.reset( new float[3 * n]);
+			regularHalfAngleData.reset( new float[3 * n]); // reset shared ptr
 
-			const uint32_t chunkSize = 2 * nPhiD; // 360
+			const uint32_t chunkSize = 2 * nPhiD; // equal to 360
 			CHECK((n % chunkSize) == 0);
 			const uint32_t nChunks = n / chunkSize;
 			double *tmp = ALLOCA(double, chunkSize);
