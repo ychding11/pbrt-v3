@@ -204,20 +204,20 @@ namespace pbrt {
 			const uint32_t nChunks = n / chunkSize;
 			double *tmp = ALLOCA(double, chunkSize);
 			const float scales[3] = { 1.f / 1500.f, 1.15f / 1500.f, 1.66f / 1500.f };
-			for (int c = 0; c < 3; ++c)
+			for (int c = 0; c < 3; ++c) // Three Channels.
 			{
 				int offset = 0;
 				for (uint32_t i = 0; i < nChunks; ++i)
 				{
 					if (fread(tmp, sizeof(double), chunkSize, f) != chunkSize)
 					{
-						LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF " "data file \"%s\"", filename.c_str());
+						LOG(ERROR) << StringPrintf("Premature end-of-file in measured BRDF data file \"%s\".", filename.c_str());
 						fclose(f);
 						return;
 					}
 					for (uint32_t j = 0; j < chunkSize; ++j)
 					{
-						regularHalfAngleData.get()[3 * offset++ + c] = max(0., tmp[j] * scales[c]);
+						regularHalfAngleData.get()[3 * offset++ + c] = max(0.0, tmp[j] * scales[c]);
 					}
 				}
 			}
@@ -227,7 +227,6 @@ namespace pbrt {
 			const uint32_t m = mPhiH * mThetaH * mPhiO * mThetaO;
 			const uint32_t stride = mThetaH * mPhiH;
 
-			//float* ohHalfangleData = new float[m];
 			std::vector<float> radianHalfAngleData(m);
 			mapToViewHalfangle(regularHalfAngleData.get(), &radianHalfAngleData[0]);
 
@@ -247,6 +246,8 @@ namespace pbrt {
 			printf("avg phi: %d \n", int(condSum / float(mThetaO * mPhiO)) );
 		}
 	}
+
+
 	void MeasuredAdaptiveMaterial::mapToViewHalfangle(float* tmpData, float* finalData)
 	{
 		int index = 0, ind;
@@ -262,7 +263,7 @@ namespace pbrt {
 					for (uint32_t l = 0; l < mPhiH; l++)
 					{
 						double phiHalf = l * 2 * M_PI / mPhiH;
-						ind = lookup_brdf_val(tmpData, thetaOut, phiOut, thetaHalf, phiHalf);
+						ind = lookupBRDFIndex(tmpData, thetaOut, phiOut, thetaHalf, phiHalf);
 						double val = tmpData[ind] + tmpData[ind + 1] + tmpData[ind + 2];
 						finalData[index++] = val;
 					}
@@ -278,7 +279,7 @@ namespace pbrt {
 		fclose(f);*/
 	}
 
-	int MeasuredAdaptiveMaterial::lookup_brdf_val(float *brdf, double thetaOut, double phiOut, double thetaHalf, double phiHalf)
+	int MeasuredAdaptiveMaterial::lookupBRDFIndex(float *brdf, double thetaOut, double phiOut, double thetaHalf, double phiHalf)
 	{
 		double hz = cos(thetaHalf);
 		double sinThetaHalf = sin(thetaHalf);
@@ -324,7 +325,7 @@ namespace pbrt {
 		return wdPhiIndex + nPhiD * (wdThetaIndex + whThetaIndex * nThetaD);
 	}
 
-
+	// OVERRIDE
 	void MeasuredAdaptiveMaterial::ComputeScatteringFunctions(SurfaceInteraction *si, MemoryArena &arena,
 		TransportMode mode,
 		bool allowMultipleLobes) const

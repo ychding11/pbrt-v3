@@ -92,7 +92,7 @@ namespace pbrt {
 			bool allowMultipleLobes) const override;
 	private:
 		void mapToViewHalfangle(float *tmpData, float *finalData);
-		int lookup_brdf_val(float *brdf, double thetaOut, double phiOut, double thetaHalf, double phiHalf);
+		int lookupBRDFIndex(float *brdf, double thetaOut, double phiOut, double thetaHalf, double phiHalf);
 		void loadAndAnalyzeBRDF(const string &filename, int type, int mSize, float mPDist, float mRDist);
 
 	private:
